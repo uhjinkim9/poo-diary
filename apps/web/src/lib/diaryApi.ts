@@ -9,7 +9,7 @@ import type {
 export const diaryApi = {
   getAll: async (): Promise<DiaryEntry[]> => {
     const { data } = await apiClient.get<DiaryEntry[]>("/diary");
-    return data;
+    return Array.isArray(data) ? data : [];
   },
 
   getById: async (id: string): Promise<DiaryEntry> => {
@@ -21,7 +21,7 @@ export const diaryApi = {
     const { data } = await apiClient.get<FoodCorrelation[]>(
       "/diary/stats/food-correlation",
     );
-    return data;
+    return Array.isArray(data) ? data : [];
   },
 
   create: async (dto: CreateDiaryDto): Promise<DiaryEntry> => {
