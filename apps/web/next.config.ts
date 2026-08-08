@@ -9,7 +9,8 @@ const pwaConfig = withPWA({
 });
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  // standalone은 Docker 빌드 시에만 활성화 (Windows 심링크 권한 문제 회피)
+  output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
   reactStrictMode: true,
   transpilePackages: ["@poo-diary/shared"],
 };

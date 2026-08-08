@@ -9,6 +9,9 @@ WORKDIR /app
 COPY . .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV DOCKER_BUILD=1
 RUN pnpm --filter @poo-diary/web build
 
 # ── 프로덕션 이미지 (Next.js standalone) ─────────────────
