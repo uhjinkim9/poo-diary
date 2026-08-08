@@ -1,9 +1,9 @@
 import axios from "axios";
 
 export const apiClient = axios.create({
-  // 프로덕션: 기본값 /api → Next.js rewrites가 파드 내부로 프록시
-  // 로컬 개발: .env.local의 NEXT_PUBLIC_API_URL=http://localhost:3001 로 오버라이드
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "/api",
+  // 프로덕션: NEXT_PUBLIC_API_URL=/api → Next.js rewrites가 파드 내부로 프록시
+  // 로컬 개발: .env.local의 NEXT_PUBLIC_API_URL=http://localhost:3001 으로 직접 연결
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001",
   headers: {
     "Content-Type": "application/json",
   },
