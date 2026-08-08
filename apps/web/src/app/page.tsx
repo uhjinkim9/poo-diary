@@ -24,9 +24,7 @@ export default function HomePage() {
 
       {/* 팀 카드 */}
       <div className="card p-4 mb-6 bg-gradient-to-r from-amber-50 to-orange-50">
-        <p className="text-xs font-semibold text-amber-500 mb-1">
-          오늘의 퀘 팁
-        </p>
+        <p className="text-xs font-semibold text-amber-500 mb-1">오늘의 팁</p>
         <p className="text-sm text-amber-800">{tip}</p>
       </div>
 

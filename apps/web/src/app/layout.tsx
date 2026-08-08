@@ -13,7 +13,7 @@ const pretendard = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "💩 Poo Diary",
+  title: "Poo Diary",
   description: "나의 배변 활동을 기록하고 건강을 관리해요",
   manifest: "/manifest.json",
   appleWebApp: {
