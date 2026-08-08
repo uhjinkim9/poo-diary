@@ -83,6 +83,23 @@ DB_NAME=poo_diary
 DB_SSL=false
 ```
 
+## GitHub Actions / GitOps 배포
+
+`.github/workflows/docker.yml`은 API와 Web 이미지를 빌드해 GHCR에 push하고,
+`uhjinkim9/helm-chart` 저장소의
+`charts/namespace-poo-diary/poo-diary/values.yaml`에서 두 이미지 태그를 같은
+`main-<sha7>` 값으로 갱신합니다. 이후 Argo CD가 변경을 감지해 배포합니다.
+
+GitHub 저장소의 **Settings → Secrets and variables → Actions**에 다음 값을
+등록해야 합니다.
+
+- Secret `GITOPS_TOKEN`: `uhjinkim9/helm-chart` 저장소 `contents: write` 권한 PAT
+- Secret `DISCORD_WEBHOOK`: 배포 결과를 받을 Discord Webhook URL
+- Variable `NEXT_PUBLIC_API_URL`: 브라우저에서 접근할 운영 API URL
+
+GHCR 인증에는 별도 PAT가 아니라 워크플로의 `GITHUB_TOKEN`을 사용합니다.
+기존 SSH 직접 배포는 사용하지 않으며 Argo CD가 유일한 배포 주체입니다.
+
 ## 브리스톨 대변 형태 척도
 
 | 타입  | 설명                           |
