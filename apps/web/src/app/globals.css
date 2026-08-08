@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --poo-brown: #8b4513;
+  --poo-light: #fdf6ee;
+  --poo-accent: #d4a17a;
+}
+
+body {
+  background: linear-gradient(160deg, #fdf6ee 0%, #fde8cc 100%);
+  min-height: 100dvh;
+  color: #2d1a0e;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 모바일 safe area */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* 카드 hover 트랜지션 */
+@layer components {
+  .card {
+    @apply bg-white rounded-3xl shadow-sm border border-amber-100/60;
+  }
+  .btn-primary {
+    @apply bg-amber-800 text-white font-bold rounded-2xl shadow-md
+           active:scale-95 transition-all duration-150
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-outline {
+    @apply bg-white text-amber-800 font-semibold rounded-2xl border-2 border-amber-200
+           active:scale-95 transition-all duration-150;
+  }
+}
