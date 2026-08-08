@@ -13,6 +13,16 @@ const nextConfig: NextConfig = {
   output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
   reactStrictMode: true,
   transpilePackages: ["@poo-diary/shared"],
+  // /api/* → 파드 내부 백엔드로 프록시 (브라우저가 localhost를 쓸 수 없는 문제 해결)
+  async rewrites() {
+    const dest = process.env.INTERNAL_API_URL ?? "http://localhost:3001";
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${dest}/:path*`,
+      },
+    ];
+  },
 };
 
 export default pwaConfig(nextConfig);

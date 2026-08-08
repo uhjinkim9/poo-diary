@@ -24,6 +24,8 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
+      # 파드 내부에서 백엔드로 프록시할 주소
+      INTERNAL_API_URL: http://api:3001
 
   db:
     image: postgres:16-alpine
