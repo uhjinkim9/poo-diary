@@ -19,7 +19,8 @@ import { DiaryEntryEntity } from "./diary/diary.entity";
         password: config.get<string>("DB_PASSWORD", "postgres"),
         database: config.get<string>("DB_NAME", "poo_diary"),
         entities: [DiaryEntryEntity],
-        synchronize: config.get<string>("NODE_ENV") !== "production",
+        // synchronize: config.get<string>("NODE_ENV") !== "production",
+        synchronize: true,
         logging: config.get<string>("NODE_ENV") === "development",
         ssl:
           config.get<string>("DB_SSL") === "true"
