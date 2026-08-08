@@ -6,6 +6,12 @@ on:
     tags: ["v*.*.*"]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "재빌드 사유"
+        required: false
+        default: "Manual rebuild for updated env variables"
 
 concurrency:
   group: poo-diary-${{ github.ref }}
