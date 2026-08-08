@@ -13,10 +13,14 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
-  // CORS
+  // CORS — WEB_URL 콤마 구분으로 여러 origin 허용, 미설정 시 전체 허용
+  const rawOrigin = process.env.WEB_URL ?? "*";
+  const allowedOrigins =
+    rawOrigin === "*" ? true : rawOrigin.split(",").map((o) => o.trim());
   app.enableCors({
-    origin: process.env.WEB_URL ?? "http://localhost:3000",
-    credentials: true,
+    origin: allowedOrigins,
+    credentials: allowedOrigins !== true,
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
   });
 
   // 전역 Validation
