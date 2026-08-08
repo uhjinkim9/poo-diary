@@ -1,0 +1,40 @@
+services:
+  api:
+    image: ghcr.io/${GITHUB_OWNER}/poo-diary-api:${TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      WEB_URL: ${WEB_URL}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-poo_diary}
+      DB_SSL: ${DB_SSL:-true}
+    depends_on:
+      - db
+
+  web:
+    image: ghcr.io/${GITHUB_OWNER}/poo-diary-web:${TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-poo_diary}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # 외부 관리형 DB 사용 시 이 블록 삭제
+
+volumes:
+  pgdata:
