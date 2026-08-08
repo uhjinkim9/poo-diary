@@ -39,7 +39,7 @@ export default function HomePage() {
       {/* 퀘 이모지 그리드 */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         {[
-          { emoji: "1기본", label: "실력 1", href: "/diary" },
+          { emoji: "1 기본", label: "실력 1", href: "/diary" },
           { emoji: "📊", label: "통계", href: "/stats" },
           { emoji: "🏆", label: "연속기록", href: "/stats" },
         ].map((item) => (
