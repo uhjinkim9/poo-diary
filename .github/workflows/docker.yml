@@ -88,6 +88,7 @@ jobs:
           labels: ${{ steps.meta-web.outputs.labels }}
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            INTERNAL_API_URL=${{ vars.INTERNAL_API_URL || 'http://poo-diary-api:3001' }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max
 

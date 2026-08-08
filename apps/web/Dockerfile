@@ -10,7 +10,9 @@ COPY . .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile
 ARG NEXT_PUBLIC_API_URL
+ARG INTERNAL_API_URL=http://poo-diary-api:3001
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV INTERNAL_API_URL=$INTERNAL_API_URL
 ENV DOCKER_BUILD=1
 RUN pnpm --filter @poo-diary/web build
 
