@@ -12,7 +12,14 @@ export function UserSetup() {
 
   function submit() {
     const name = nickname.trim() || "익명";
-    localStorage.setItem("poo-user-id", crypto.randomUUID());
+    const id =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+            const r = (Math.random() * 16) | 0;
+            return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+          });
+    localStorage.setItem("poo-user-id", id);
     localStorage.setItem("poo-user-name", name);
     setOpen(false);
   }
