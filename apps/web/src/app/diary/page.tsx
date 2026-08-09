@@ -34,15 +34,24 @@ function EntryCard({ entry }: { entry: DiaryEntry }) {
           style={{ backgroundColor: COLOR_SWATCHES[entry.color] }}
         />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center justify-between gap-2 mb-1">
             <span className="text-base font-bold text-amber-900">
               {BRISTOL_EMOJIS[entry.bristolType]} {entry.bristolType}유형
             </span>
-            {entry.hasPain && (
-              <span className="text-xs bg-red-50 text-red-500 border border-red-100 px-2 py-0.5 rounded-full">
-                통증 있음
-              </span>
-            )}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {entry.hasPain && (
+                <span className="text-xs bg-red-50 text-red-500 border border-red-100 px-2 py-0.5 rounded-full">
+                  통증 있음
+                </span>
+              )}
+              <Link
+                href={`/diary/${entry.id}/edit`}
+                aria-label="기록 수정"
+                className="text-xs text-amber-600 border border-amber-200 rounded-full px-2 py-0.5 hover:bg-amber-50"
+              >
+                수정
+              </Link>
+            </div>
           </div>
           <p className="text-xs text-amber-500 mb-1">
             {date.toLocaleDateString("ko-KR", {
