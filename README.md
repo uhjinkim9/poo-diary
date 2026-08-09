@@ -2,6 +2,8 @@
 
 나의 배변 활동을 기록하고 건강을 관리하는 PWA 앱.
 
+**🔗 [https://poo-diary.mercury-lab.uk](https://poo-diary.mercury-lab.uk)**
+
 ## 기술 스택
 
 | 레이어    | 기술                                     |
