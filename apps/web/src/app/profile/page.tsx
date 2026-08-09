@@ -31,7 +31,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="min-h-[100dvh] p-5 max-w-md mx-auto">
+    <main className="min-h-[100dvh] w-full min-w-0 max-w-md mx-auto overflow-x-hidden p-5">
       <header className="pt-10 pb-6">
         <p className="text-xs font-medium text-amber-500 tracking-widest uppercase mb-1">
           Profile
@@ -39,20 +39,24 @@ export default function ProfilePage() {
         <h1 className="text-3xl font-black text-amber-900">내 정보</h1>
       </header>
 
-      <div className="card p-5 mb-4">
+      <div className="card min-w-0 p-5 mb-4">
         <label className="block text-xs font-semibold text-amber-800 mb-2">
           닉네임
         </label>
-        <div className="flex gap-2">
+        <div className="flex w-full min-w-0 gap-2">
           <input
             type="text"
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && save()}
             maxLength={20}
-            className="flex-1 border border-amber-200 rounded-2xl px-4 py-2.5 text-sm text-amber-900 outline-none focus:ring-2 focus:ring-amber-400"
+            className="w-0 min-w-0 flex-1 border border-amber-200 rounded-2xl px-4 py-2.5 text-sm text-amber-900 outline-none focus:ring-2 focus:ring-amber-400"
           />
-          <button onClick={save} className="btn-primary px-4 py-2.5 text-sm">
+          <button
+            type="button"
+            onClick={save}
+            className="btn-primary shrink-0 px-4 py-2.5 text-sm"
+          >
             {saved ? "✓" : "저장"}
           </button>
         </div>
