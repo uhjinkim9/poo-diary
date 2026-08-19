@@ -39,9 +39,9 @@ export class CreateDiaryDto {
 
   @ApiProperty({
     description: "대변 색상",
-    enum: ["brown", "dark-brown", "yellow", "green", "red", "black", "white"],
+    enum: ["brown", "tan", "dark-brown", "yellow", "green", "red", "black"],
   })
-  @IsEnum(["brown", "dark-brown", "yellow", "green", "red", "black", "white"])
+  @IsEnum(["brown", "tan", "dark-brown", "yellow", "green", "red", "black"])
   color!: StoolColor;
 
   @ApiProperty({ description: "통증 여부" })

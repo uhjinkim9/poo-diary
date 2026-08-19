@@ -7,12 +7,12 @@ import Link from "next/link";
 
 const COLOR_SWATCHES: Record<StoolColor, string> = {
   brown: "#8B4513",
+  tan: "#C8922A",
   "dark-brown": "#3E1A08",
   yellow: "#F4D03F",
   green: "#27AE60",
   red: "#C0392B",
   black: "#1A1A1A",
-  white: "#D5D8DC",
 };
 
 const BRISTOL_EMOJIS: Record<number, string> = {

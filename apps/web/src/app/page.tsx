@@ -1,3 +1,6 @@
+"use client";
+
+import { useDiaryList } from "@/hooks/useDiary";
 import Link from "next/link";
 
 const TIPS = [
@@ -7,7 +10,26 @@ const TIPS = [
   "갈색이 가장 정상적인 색상이에요",
 ];
 
+const LEVELS = [
+  { min: 0, emoji: "🌱", label: "새싹", desc: "첫 발걸음!" },
+  { min: 5, emoji: "💧", label: "수련생", desc: "기록 5개 달성" },
+  { min: 15, emoji: "💪", label: "열심이", desc: "기록 15개 달성" },
+  { min: 30, emoji: "⭐", label: "장인", desc: "기록 30개 달성" },
+  { min: 60, emoji: "🏆", label: "전설", desc: "기록 60개 달성" },
+];
+
+function calcLevel(count: number) {
+  let lv = LEVELS[0];
+  for (const l of LEVELS) {
+    if (count >= l.min) lv = l;
+  }
+  const next = LEVELS[LEVELS.indexOf(lv) + 1];
+  return { ...lv, next, count };
+}
+
 export default function HomePage() {
+  const { data: entries = [] } = useDiaryList();
+  const lv = calcLevel(entries.length);
   const tip = TIPS[new Date().getDate() % TIPS.length];
 
   return (
@@ -38,8 +60,18 @@ export default function HomePage() {
 
       {/* 퀘 이모지 그리드 */}
       <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="card p-4 flex flex-col items-center gap-1">
+          <span className="text-2xl">{lv.emoji}</span>
+          <span className="text-xs font-bold text-amber-700">{lv.label}</span>
+          {lv.next ? (
+            <span className="text-[10px] text-gray-400">
+              {lv.next.min - lv.count}개 더
+            </span>
+          ) : (
+            <span className="text-[10px] text-amber-500">최고 레벨!</span>
+          )}
+        </div>
         {[
-          { emoji: "1 기본", label: "실력 1", href: "/diary" },
           { emoji: "📊", label: "통계", href: "/stats" },
           { emoji: "🏆", label: "연속기록", href: "/stats" },
         ].map((item) => (

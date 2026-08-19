@@ -14,21 +14,21 @@ export const BRISTOL_LABELS: Record<BristolType, string> = {
 /** 대변 색상 */
 export type StoolColor =
   | "brown"
+  | "tan"
   | "dark-brown"
   | "yellow"
   | "green"
   | "red"
-  | "black"
-  | "white";
+  | "black";
 
 export const STOOL_COLOR_LABELS: Record<StoolColor, string> = {
   brown: "갈색 (정상)",
+  tan: "황토색",
   "dark-brown": "진한 갈색",
   yellow: "노란색",
   green: "녹색",
   red: "붉은색",
   black: "검은색",
-  white: "흰색/회색",
 };
 
 /** 식품 태그 */

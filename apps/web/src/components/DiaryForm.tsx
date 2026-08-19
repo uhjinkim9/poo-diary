@@ -22,12 +22,12 @@ const BRISTOL_ITEMS: { type: BristolType; emoji: string }[] = [
 
 const COLOR_OPTIONS: { value: StoolColor; label: string; hex: string }[] = [
   { value: "brown", label: "갈색", hex: "#8B4513" },
+  { value: "tan", label: "황토색", hex: "#C8922A" },
   { value: "dark-brown", label: "진갈색", hex: "#3E1A08" },
   { value: "yellow", label: "노란색", hex: "#F4D03F" },
   { value: "green", label: "녹색", hex: "#27AE60" },
   { value: "red", label: "붉은색", hex: "#C0392B" },
   { value: "black", label: "검은색", hex: "#1A1A1A" },
-  { value: "white", label: "흰색", hex: "#D5D8DC" },
 ];
 
 const FOOD_TAGS = Object.keys(FOOD_TAG_META) as FoodTag[];
