@@ -30,6 +30,9 @@ export class DiaryEntryEntity {
   @Column({ type: "simple-json", default: "[]" })
   foods!: string[];
 
+  @Column({ type: "varchar", length: 200, nullable: true })
+  mealNote!: string | null;
+
   @Column({ type: "varchar", length: 300, nullable: true })
   memo!: string | null;
 

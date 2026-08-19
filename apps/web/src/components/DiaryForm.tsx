@@ -70,7 +70,9 @@ export function DiaryForm({
             <button
               key={type}
               type="button"
-              onClick={() => setForm((value) => ({ ...value, bristolType: type }))}
+              onClick={() =>
+                setForm((value) => ({ ...value, bristolType: type }))
+              }
               className={`flex flex-col items-center py-2 rounded-2xl border-2 transition-all duration-150 ${
                 form.bristolType === type
                   ? "border-amber-700 bg-amber-50 scale-105 shadow-sm"
@@ -78,7 +80,9 @@ export function DiaryForm({
               }`}
             >
               <span className="text-2xl leading-none mb-1">{emoji}</span>
-              <span className="text-[10px] font-bold text-amber-800">{type}</span>
+              <span className="text-[10px] font-bold text-amber-800">
+                {type}
+              </span>
             </button>
           ))}
         </div>
@@ -98,7 +102,9 @@ export function DiaryForm({
             <button
               key={value}
               type="button"
-              onClick={() => setForm((formValue) => ({ ...formValue, color: value }))}
+              onClick={() =>
+                setForm((formValue) => ({ ...formValue, color: value }))
+              }
               className="flex flex-col items-center gap-1.5"
               title={label}
             >
@@ -161,9 +167,37 @@ export function DiaryForm({
         </div>
         {(form.foods ?? []).length > 0 && (
           <p className="text-xs text-amber-600 mt-3">
-            선택됨: {(form.foods ?? []).map((tag) => FOOD_TAG_META[tag].emoji).join(" ")}
+            선택됨:{" "}
+            {(form.foods ?? [])
+              .map((tag) => FOOD_TAG_META[tag].emoji)
+              .join(" ")}
           </p>
         )}
+      </section>
+
+      <section className="card p-5">
+        <h2 className="text-xs font-bold text-amber-500 tracking-widest uppercase mb-1">
+          오늘 먹은 메뉴 (선택)
+        </h2>
+        <p className="text-[11px] text-gray-400 mb-3">
+          구체적인 메뉴를 쉼표로 구분해 적으면 월별 통계에서 확인할 수 있어요
+        </p>
+        <input
+          type="text"
+          value={form.mealNote ?? ""}
+          onChange={(event) =>
+            setForm((value) => ({
+              ...value,
+              mealNote: event.target.value || undefined,
+            }))
+          }
+          placeholder="예: 김치찌개, 삼겹살, 아메리카노"
+          maxLength={200}
+          className="w-full bg-gray-50 border border-amber-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-amber-400 placeholder:text-gray-300 transition-colors"
+        />
+        <p className="text-right text-[10px] text-gray-300 mt-1">
+          {(form.mealNote ?? "").length}/200
+        </p>
       </section>
 
       <section className="card p-5">
@@ -202,7 +236,9 @@ export function DiaryForm({
                 <button
                   key={level}
                   type="button"
-                  onClick={() => setForm((value) => ({ ...value, painLevel: level }))}
+                  onClick={() =>
+                    setForm((value) => ({ ...value, painLevel: level }))
+                  }
                   className={`flex-1 py-1.5 rounded-xl text-xs font-bold border-2 transition-all ${
                     form.painLevel === level
                       ? "border-red-400 bg-red-50 text-red-600"

@@ -65,6 +65,15 @@ export class CreateDiaryDto {
   @IsEnum(FOOD_TAGS, { each: true })
   foods?: FoodTag[];
 
+  @ApiPropertyOptional({
+    description: "오늘 먹은 메뉴 (최대 200자)",
+    example: "김치찌개, 삼겹살",
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  mealNote?: string;
+
   @ApiPropertyOptional({ description: "메모 (최대 300자)" })
   @IsOptional()
   @IsString()

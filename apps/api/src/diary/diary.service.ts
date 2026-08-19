@@ -31,6 +31,7 @@ export class DiaryService {
       hasPain: dto.hasPain,
       painLevel: dto.painLevel ?? null,
       foods: dto.foods ?? [],
+      mealNote: dto.mealNote ?? null,
       memo: dto.memo ?? null,
       recordedAt: dto.recordedAt ? new Date(dto.recordedAt) : new Date(),
     });

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useDiaryList } from "@/hooks/useDiary";
 import type { DiaryEntry, StoolColor } from "@poo-diary/shared";
 import Link from "next/link";
@@ -64,6 +65,11 @@ function EntryCard({ entry }: { entry: DiaryEntry }) {
               minute: "2-digit",
             })}
           </p>
+          {entry.mealNote && (
+            <p className="text-xs text-amber-700 font-medium truncate mb-0.5">
+              🍽️ {entry.mealNote}
+            </p>
+          )}
           {entry.memo && (
             <p className="text-xs text-gray-500 truncate">{entry.memo}</p>
           )}
@@ -120,9 +126,44 @@ export default function DiaryListPage() {
             총 {entries.length}개의 기록
           </p>
           <ul className="flex flex-col gap-3">
-            {entries.map((entry) => (
-              <EntryCard key={entry.id} entry={entry} />
-            ))}
+            {entries.reduce<React.ReactNode[]>((acc, entry, i) => {
+              const date = new Date(entry.recordedAt).toLocaleDateString(
+                "ko-KR",
+                {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                },
+              );
+              const prevDate =
+                i > 0
+                  ? new Date(entries[i - 1].recordedAt).toLocaleDateString(
+                      "ko-KR",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      },
+                    )
+                  : null;
+
+              if (date !== prevDate) {
+                acc.push(
+                  <li
+                    key={`sep-${date}`}
+                    className="flex items-center gap-3 py-1"
+                  >
+                    <span className="flex-1 h-px bg-amber-100" />
+                    <span className="text-[11px] font-semibold text-amber-400 whitespace-nowrap">
+                      {date}
+                    </span>
+                    <span className="flex-1 h-px bg-amber-100" />
+                  </li>,
+                );
+              }
+              acc.push(<EntryCard key={entry.id} entry={entry} />);
+              return acc;
+            }, [])}
           </ul>
         </>
       )}

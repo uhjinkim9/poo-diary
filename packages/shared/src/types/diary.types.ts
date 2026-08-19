@@ -74,6 +74,7 @@ export interface DiaryEntry {
   hasPain: boolean;
   painLevel?: number; // 1~5
   foods: FoodTag[];
+  mealNote?: string;
   memo?: string;
   recordedAt: string; // ISO 8601
   createdAt: string;
@@ -87,6 +88,7 @@ export interface CreateDiaryDto {
   hasPain: boolean;
   painLevel?: number;
   foods?: FoodTag[];
+  mealNote?: string;
   memo?: string;
   recordedAt?: string;
 }
