@@ -40,6 +40,7 @@ export default function EditDiaryPage() {
     hasPain: entry.hasPain,
     painLevel: entry.painLevel,
     foods: entry.foods,
+    mealNote: entry.mealNote,
     memo: entry.memo,
     recordedAt: entry.recordedAt,
   };

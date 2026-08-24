@@ -51,7 +51,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/poo-diary-api
           tags: |
-            type=sha,prefix=${{ github.ref_name }}-,format=short
+            type=raw,value=build-${{ github.run_number }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -73,7 +73,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/poo-diary-web
           tags: |
-            type=sha,prefix=${{ github.ref_name }}-,format=short
+            type=raw,value=build-${{ github.run_number }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -115,10 +115,9 @@ jobs:
 
       - name: Update API and Web tags
         env:
-          IMAGE_TAG: main-${{ github.sha }}
+          IMAGE_TAG: build-${{ github.run_number }}
         run: |
           set -euo pipefail
-          IMAGE_TAG="${IMAGE_TAG:0:12}"
           VALUES_FILE="${CHART_PATH}/values.yaml"
 
           test -f "${VALUES_FILE}"
@@ -132,7 +131,7 @@ jobs:
 
       - name: Commit and push Helm values
         env:
-          SOURCE_SHA: ${{ github.sha }}
+          IMAGE_TAG: build-${{ github.run_number }}
         run: |
           set -euo pipefail
           VALUES_FILE="${CHART_PATH}/values.yaml"
@@ -146,7 +145,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "ci: deploy poo-diary ${SOURCE_SHA:0:7} [skip ci]"
+          git commit -m "ci: deploy poo-diary ${IMAGE_TAG} [skip ci]"
           git push origin main
 
   notify:
@@ -164,7 +163,7 @@ jobs:
           status: success
           title: "✅ 빌드 성공: poo-diary"
           description: |
-            **태그:** `main-${{ github.sha }}`
+            **태그:** `build-${{ github.run_number }}`
             **커밋:** `${{ github.sha }}`
             Argo CD 자동 배포가 시작됩니다.
           color: 0x57F287
