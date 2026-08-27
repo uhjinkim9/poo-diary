@@ -27,7 +27,11 @@ export default function EditDiaryPage() {
           <p className="text-3xl mb-2">⚠️</p>
           <p className="text-sm">기록을 불러오지 못했어요.</p>
         </div>
-        <button type="button" onClick={() => router.back()} className="text-sm text-amber-700">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="text-sm text-amber-700"
+        >
           ← 돌아가기
         </button>
       </main>

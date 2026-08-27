@@ -3,28 +3,67 @@
 import { useDiaryList } from "@/hooks/useDiary";
 import { FOOD_TAG_META } from "@poo-diary/shared";
 import type { DiaryEntry, FoodTag } from "@poo-diary/shared";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-type Tab = "day" | "week" | "month" | "analysis";
+type PeriodType = "day" | "week" | "month" | "all";
 
-const TAB_LABELS: Record<Tab, string> = {
-  day: "오늘",
-  week: "이번 주",
-  month: "이번 달",
-  analysis: "분석",
+const PERIOD_LABELS: Record<PeriodType, string> = {
+  day: "일간",
+  week: "주간",
+  month: "월간",
+  all: "전체",
 };
 
-function getPeriodStart(tab: Exclude<Tab, "analysis">): Date {
-  const now = new Date();
-  if (tab === "day")
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if (tab === "week") {
-    const d = new Date(now);
-    d.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-    d.setHours(0, 0, 0, 0);
-    return d;
+function startOfPeriod(type: Exclude<PeriodType, "all">, date: Date): Date {
+  if (type === "day") {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
   }
-  return new Date(now.getFullYear(), now.getMonth(), 1);
+  if (type === "week") {
+    const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    return start;
+  }
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function getPeriodRange(
+  type: Exclude<PeriodType, "all">,
+  date: Date,
+): { start: Date; end: Date } {
+  const start = startOfPeriod(type, date);
+  const end = new Date(start);
+  if (type === "day") end.setDate(end.getDate() + 1);
+  if (type === "week") end.setDate(end.getDate() + 7);
+  if (type === "month") end.setMonth(end.getMonth() + 1);
+  return { start, end };
+}
+
+function movePeriod(
+  type: Exclude<PeriodType, "all">,
+  date: Date,
+  amount: number,
+): Date {
+  const next = new Date(date);
+  if (type === "day") next.setDate(next.getDate() + amount);
+  if (type === "week") next.setDate(next.getDate() + amount * 7);
+  if (type === "month") next.setMonth(next.getMonth() + amount);
+  return next;
+}
+
+function formatPeriod(type: PeriodType, date: Date): string {
+  if (type === "all") return "전체 기록";
+  const formatter = new Intl.DateTimeFormat("ko-KR", {
+    year: "numeric",
+    month: "short",
+    day: type === "month" ? undefined : "numeric",
+  });
+  if (type !== "week") return formatter.format(date);
+  const { start, end } = getPeriodRange("week", date);
+  const lastDay = new Date(end.getTime() - 1);
+  return `${formatter.format(start)} – ${new Intl.DateTimeFormat("ko-KR", {
+    month: "short",
+    day: "numeric",
+  }).format(lastDay)}`;
 }
 
 function calcTopMenus(
@@ -79,19 +118,22 @@ function calcFoodCorrelation(entries: DiaryEntry[]) {
     .sort((a, b) => b.count - a.count);
 }
 
-/** 날짜 기준 평균 배변 주기(일). 기록이 2개 미만이면 null. */
+/** 기록 시각 기준 평균 배변 간격(일). 하루 여러 기록도 각각 반영한다. */
 function calcAvgInterval(entries: DiaryEntry[]): number | null {
   if (entries.length < 2) return null;
-  // 날짜(YYYY-MM-DD)만 추출해 중복 제거 후 오름차순 정렬
-  const days = Array.from(
-    new Set(entries.map((e) => e.recordedAt.slice(0, 10))),
-  ).sort();
-  if (days.length < 2) return null;
+
+  const timestamps = entries
+    .map((entry) => new Date(entry.recordedAt).getTime())
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b);
+  if (timestamps.length < 2) return null;
+
   let totalMs = 0;
-  for (let i = 1; i < days.length; i++) {
-    totalMs += new Date(days[i]).getTime() - new Date(days[i - 1]).getTime();
+  for (let i = 1; i < timestamps.length; i++) {
+    totalMs += timestamps[i] - timestamps[i - 1];
   }
-  const avgDays = totalMs / (days.length - 1) / 86_400_000;
+
+  const avgDays = totalMs / (timestamps.length - 1) / 86_400_000;
   return Math.round(avgDays * 10) / 10;
 }
 
@@ -296,7 +338,7 @@ function AnalysisView({ entries }: { entries: DiaryEntry[] }) {
             <span className="text-2xl">🗓️</span>
           </div>
           <div>
-            <p className="text-xs text-amber-500 mb-0.5">평균 배변 주기</p>
+            <p className="text-xs text-amber-500 mb-0.5">평균 배변 간격</p>
             <p className="font-black text-lg text-amber-900">
               {avgInterval}
               <span className="text-base font-normal text-amber-600 ml-1">
@@ -304,13 +346,17 @@ function AnalysisView({ entries }: { entries: DiaryEntry[] }) {
               </span>
             </p>
             <p className="text-xs text-gray-400">
-              {avgInterval <= 1
-                ? "매일 규칙적으로 배변하고 있어요 👍"
-                : avgInterval <= 2
-                  ? "1~2일 주기로 배변하고 있어요"
-                  : avgInterval <= 3
-                    ? "2~3일 주기예요. 식이섬유 섭취를 늘려보세요"
-                    : "주기가 긴 편이에요. 변비를 주의하세요"}
+              {avgInterval < 0.5
+                ? "하루에 여러 번 배변하는 패턴이에요"
+                : avgInterval < 1
+                  ? "하루 안팎의 간격으로 배변하고 있어요"
+                  : avgInterval === 1
+                    ? "평균 하루 간격으로 규칙적으로 배변하고 있어요 👍"
+                    : avgInterval <= 2
+                      ? "1~2일 주기로 배변하고 있어요"
+                      : avgInterval <= 3
+                        ? "2~3일 주기예요. 식이섬유 섭취를 늘려보세요"
+                        : "주기가 긴 편이에요. 변비를 주의하세요"}
             </p>
           </div>
         </div>
@@ -333,13 +379,23 @@ function AnalysisView({ entries }: { entries: DiaryEntry[] }) {
 
 export default function StatsPage() {
   const { data: allEntries = [] } = useDiaryList();
-  const [tab, setTab] = useState<Tab>("week");
+  const [periodType, setPeriodType] = useState<PeriodType>("week");
+  const [cursor, setCursor] = useState(() => new Date());
 
-  const isAnalysis = tab === "analysis";
-  const start = isAnalysis
-    ? new Date(0)
-    : getPeriodStart(tab as Exclude<Tab, "analysis">);
-  const filtered = allEntries.filter((e) => new Date(e.recordedAt) >= start);
+  const filtered = useMemo(() => {
+    if (periodType === "all") return allEntries;
+    const { start, end } = getPeriodRange(periodType, cursor);
+    return allEntries.filter((entry) => {
+      const recordedAt = new Date(entry.recordedAt);
+      return recordedAt >= start && recordedAt < end;
+    });
+  }, [allEntries, cursor, periodType]);
+
+  const isCurrentPeriod =
+    periodType === "all" ||
+    startOfPeriod(periodType, cursor).getTime() ===
+      startOfPeriod(periodType, new Date()).getTime();
+  const periodTitle = formatPeriod(periodType, cursor);
 
   const { count, avgBristol, painCount } = calcStats(filtered);
   const streak = calcStreak(allEntries);
@@ -355,75 +411,117 @@ export default function StatsPage() {
         <h1 className="text-3xl font-black text-amber-900">통계</h1>
       </header>
 
-      <div className="flex gap-1 mb-6 bg-amber-100/60 p-1 rounded-2xl">
-        {(["day", "week", "month", "analysis"] as Tab[]).map((t) => (
+      <div className="flex gap-1 mb-4 bg-amber-100/60 p-1 rounded-2xl">
+        {(["day", "week", "month", "all"] as PeriodType[]).map((type) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={type}
+            type="button"
+            onClick={() => {
+              setPeriodType(type);
+              if (type !== "all") setCursor(new Date());
+            }}
             className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
-              tab === t ? "bg-white text-amber-900 shadow-sm" : "text-amber-600"
+              periodType === type
+                ? "bg-white text-amber-900 shadow-sm"
+                : "text-amber-600"
             }`}
           >
-            {TAB_LABELS[t]}
+            {PERIOD_LABELS[type]}
           </button>
         ))}
       </div>
 
-      {isAnalysis ? (
-        <AnalysisView entries={allEntries} />
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            {[
-              { label: `${TAB_LABELS[tab]} 기록`, value: count, unit: "회" },
-              {
-                label: "평균 유형",
-                value: avgBristol || "-",
-                unit: avgBristol ? "형" : "",
-              },
-              {
-                label: "연속 기록",
-                value: streak || "-",
-                unit: streak ? "일" : "",
-              },
-              {
-                label: `${TAB_LABELS[tab]} 통증`,
-                value: painCount,
-                unit: "회",
-              },
-            ].map((stat) => (
-              <div key={stat.label} className="card p-4">
-                <p className="text-xs text-amber-500 mb-1">{stat.label}</p>
-                <p className="text-3xl font-black text-amber-900">
-                  {stat.value}
-                  <span className="text-base font-normal text-amber-600 ml-1">
-                    {stat.unit}
-                  </span>
-                </p>
-              </div>
-            ))}
+      {periodType !== "all" ? (
+        <div className="card mb-5 flex items-center justify-between px-3 py-2">
+          <button
+            type="button"
+            aria-label="이전 기간"
+            onClick={() => setCursor((date) => movePeriod(periodType, date, -1))}
+            className="h-10 w-10 rounded-xl text-xl text-amber-700 active:bg-amber-50"
+          >
+            ‹
+          </button>
+          <div className="text-center">
+            <p className="text-sm font-bold text-amber-900">{periodTitle}</p>
+            {!isCurrentPeriod && (
+              <button
+                type="button"
+                onClick={() => setCursor(new Date())}
+                className="mt-0.5 text-[10px] font-semibold text-amber-500"
+              >
+                현재 기간으로 돌아가기
+              </button>
+            )}
           </div>
+          <button
+            type="button"
+            aria-label="다음 기간"
+            disabled={isCurrentPeriod}
+            onClick={() => setCursor((date) => movePeriod(periodType, date, 1))}
+            className="h-10 w-10 rounded-xl text-xl text-amber-700 active:bg-amber-50 disabled:opacity-20"
+          >
+            ›
+          </button>
+        </div>
+      ) : (
+        <p className="mb-5 text-center text-xs font-semibold text-amber-600">
+          지금까지 작성한 모든 기록을 분석해요
+        </p>
+      )}
 
-          <section>
-            <h2 className="text-sm font-bold text-amber-800 mb-3">
-              🍽️ {TAB_LABELS[tab]} 식단 영향 분석
-            </h2>
-            {filtered.length === 0 ? (
-              <div className="card p-6 text-center">
-                <p className="text-3xl mb-2">📭</p>
-                <p className="text-sm font-semibold text-amber-800">
-                  {TAB_LABELS[tab]}에 기록이 없어요
-                </p>
-              </div>
-            ) : foodCorrelations.length === 0 ? (
-              <div className="card p-6 text-center">
-                <p className="text-3xl mb-2">🥗</p>
-                <p className="text-xs text-amber-500">
-                  기록할 때 식단을 선택하면 분석해드려요
-                </p>
-              </div>
-            ) : (
-              <ul className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        {[
+          { label: `${periodTitle} 기록`, value: count, unit: "회" },
+          {
+            label: "평균 유형",
+            value: avgBristol || "-",
+            unit: avgBristol ? "형" : "",
+          },
+          {
+            label: "연속 기록",
+            value: streak || "-",
+            unit: streak ? "일" : "",
+          },
+          {
+            label: `${periodTitle} 통증`,
+            value: painCount,
+            unit: "회",
+          },
+        ].map((stat) => (
+          <div key={stat.label} className="card min-w-0 p-4">
+            <p className="truncate text-xs text-amber-500 mb-1" title={stat.label}>
+              {stat.label}
+            </p>
+            <p className="text-3xl font-black text-amber-900">
+              {stat.value}
+              <span className="text-base font-normal text-amber-600 ml-1">
+                {stat.unit}
+              </span>
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <section>
+        <h2 className="text-sm font-bold text-amber-800 mb-3">
+          🍽️ {periodTitle} 식단 영향 분석
+        </h2>
+        {filtered.length === 0 ? (
+          <div className="card p-6 text-center">
+            <p className="text-3xl mb-2">📭</p>
+            <p className="text-sm font-semibold text-amber-800">
+              선택한 기간에 기록이 없어요
+            </p>
+          </div>
+        ) : foodCorrelations.length === 0 ? (
+          <div className="card p-6 text-center">
+            <p className="text-3xl mb-2">🥗</p>
+            <p className="text-xs text-amber-500">
+              기록할 때 식단을 선택하면 분석해드려요
+            </p>
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-3">
                 {foodCorrelations.map((item) => {
                   const meta = FOOD_TAG_META[item.food];
                   const color = bristolColor(item.avgBristolType);
@@ -467,16 +565,16 @@ export default function StatsPage() {
                     </li>
                   );
                 })}
-              </ul>
-            )}
-          </section>
+          </ul>
+        )}
+      </section>
 
-          {topMenus.length > 0 && (
-            <section className="mt-6">
-              <h2 className="text-sm font-bold text-amber-800 mb-3">
-                🍽️ {TAB_LABELS[tab]} 자주 먹은 메뉴
-              </h2>
-              <div className="card p-4 flex flex-wrap gap-2">
+      {topMenus.length > 0 && (
+        <section className="mt-6">
+          <h2 className="text-sm font-bold text-amber-800 mb-3">
+            🍽️ {periodTitle} 자주 먹은 메뉴
+          </h2>
+          <div className="card p-4 flex flex-wrap gap-2">
                 {topMenus.map((item, i) => (
                   <span
                     key={item.name}
@@ -493,10 +591,20 @@ export default function StatsPage() {
                     </span>
                   </span>
                 ))}
-              </div>
-            </section>
-          )}
-        </>
+          </div>
+        </section>
+      )}
+
+      {periodType === "all" && (
+        <section className="mt-8">
+          <div className="mb-4">
+            <p className="text-xs font-medium text-amber-500 tracking-widest uppercase mb-1">
+              Insights
+            </p>
+            <h2 className="text-xl font-black text-amber-900">전체 기록 분석</h2>
+          </div>
+          <AnalysisView entries={allEntries} />
+        </section>
       )}
 
       <div className="h-4" />
