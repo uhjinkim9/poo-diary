@@ -51,7 +51,7 @@ function movePeriod(
 }
 
 function formatPeriod(type: PeriodType, date: Date): string {
-  if (type === "all") return "전체 기록";
+  if (type === "all") return "전체";
   const formatter = new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
     month: "short",
@@ -436,7 +436,9 @@ export default function StatsPage() {
           <button
             type="button"
             aria-label="이전 기간"
-            onClick={() => setCursor((date) => movePeriod(periodType, date, -1))}
+            onClick={() =>
+              setCursor((date) => movePeriod(periodType, date, -1))
+            }
             className="h-10 w-10 rounded-xl text-xl text-amber-700 active:bg-amber-50"
           >
             ‹
@@ -471,7 +473,7 @@ export default function StatsPage() {
 
       <div className="grid grid-cols-2 gap-3 mb-6">
         {[
-          { label: `${periodTitle} 기록`, value: count, unit: "회" },
+          { label: "기록", value: count, unit: "회" },
           {
             label: "평균 유형",
             value: avgBristol || "-",
@@ -483,13 +485,16 @@ export default function StatsPage() {
             unit: streak ? "일" : "",
           },
           {
-            label: `${periodTitle} 통증`,
+            label: "통증",
             value: painCount,
             unit: "회",
           },
         ].map((stat) => (
           <div key={stat.label} className="card min-w-0 p-4">
-            <p className="truncate text-xs text-amber-500 mb-1" title={stat.label}>
+            <p
+              className="truncate text-xs text-amber-500 mb-1"
+              title={stat.label}
+            >
               {stat.label}
             </p>
             <p className="text-3xl font-black text-amber-900">
@@ -522,49 +527,49 @@ export default function StatsPage() {
           </div>
         ) : (
           <ul className="flex flex-col gap-3">
-                {foodCorrelations.map((item) => {
-                  const meta = FOOD_TAG_META[item.food];
-                  const color = bristolColor(item.avgBristolType);
-                  return (
-                    <li key={item.food} className="card p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl">{meta.emoji}</span>
-                          <span className="font-semibold text-amber-900 text-sm">
-                            {meta.label}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xs font-bold" style={{ color }}>
-                            {bristolLabel(item.avgBristolType)}
-                          </span>
-                          <span className="text-[10px] text-gray-400 ml-1">
-                            ({item.count}회)
-                          </span>
-                        </div>
-                      </div>
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-1">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${Math.min((item.avgBristolType / 7) * 100, 100)}%`,
-                            backgroundColor: color,
-                          }}
-                        />
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] text-gray-400">
-                          평균 {item.avgBristolType}형
-                        </span>
-                        {item.painRate > 0 && (
-                          <span className="text-[10px] text-red-400">
-                            통증 {Math.round(item.painRate * 100)}%
-                          </span>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
+            {foodCorrelations.map((item) => {
+              const meta = FOOD_TAG_META[item.food];
+              const color = bristolColor(item.avgBristolType);
+              return (
+                <li key={item.food} className="card p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{meta.emoji}</span>
+                      <span className="font-semibold text-amber-900 text-sm">
+                        {meta.label}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-bold" style={{ color }}>
+                        {bristolLabel(item.avgBristolType)}
+                      </span>
+                      <span className="text-[10px] text-gray-400 ml-1">
+                        ({item.count}회)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-1">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min((item.avgBristolType / 7) * 100, 100)}%`,
+                        backgroundColor: color,
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] text-gray-400">
+                      평균 {item.avgBristolType}형
+                    </span>
+                    {item.painRate > 0 && (
+                      <span className="text-[10px] text-red-400">
+                        통증 {Math.round(item.painRate * 100)}%
+                      </span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -575,22 +580,22 @@ export default function StatsPage() {
             🍽️ {periodTitle} 자주 먹은 메뉴
           </h2>
           <div className="card p-4 flex flex-wrap gap-2">
-                {topMenus.map((item, i) => (
-                  <span
-                    key={item.name}
-                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                      i === 0
-                        ? "bg-amber-100 border-amber-300 text-amber-900"
-                        : "bg-gray-50 border-gray-200 text-gray-600"
-                    }`}
-                  >
-                    {i === 0 && <span>🥇</span>}
-                    {item.name}
-                    <span className="ml-0.5 text-[10px] font-normal opacity-70">
-                      {item.count}회
-                    </span>
-                  </span>
-                ))}
+            {topMenus.map((item, i) => (
+              <span
+                key={item.name}
+                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                  i === 0
+                    ? "bg-amber-100 border-amber-300 text-amber-900"
+                    : "bg-gray-50 border-gray-200 text-gray-600"
+                }`}
+              >
+                {i === 0 && <span>🥇</span>}
+                {item.name}
+                <span className="ml-0.5 text-[10px] font-normal opacity-70">
+                  {item.count}회
+                </span>
+              </span>
+            ))}
           </div>
         </section>
       )}
@@ -601,7 +606,9 @@ export default function StatsPage() {
             <p className="text-xs font-medium text-amber-500 tracking-widest uppercase mb-1">
               Insights
             </p>
-            <h2 className="text-xl font-black text-amber-900">전체 기록 분석</h2>
+            <h2 className="text-xl font-black text-amber-900">
+              전체 기록 분석
+            </h2>
           </div>
           <AnalysisView entries={allEntries} />
         </section>

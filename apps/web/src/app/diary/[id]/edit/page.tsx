@@ -45,6 +45,9 @@ export default function EditDiaryPage() {
     painLevel: entry.painLevel,
     foods: entry.foods,
     mealNote: entry.mealNote,
+    menstrualDay: entry.menstrualDay,
+    hadEnoughSleep: entry.hadEnoughSleep,
+    overate: entry.overate,
     memo: entry.memo,
     recordedAt: entry.recordedAt,
   };

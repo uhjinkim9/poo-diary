@@ -201,6 +201,86 @@ export function DiaryForm({
       </section>
 
       <section className="card p-5">
+        <h2 className="text-xs font-bold text-amber-500 tracking-widest uppercase mb-1">
+          컨디션 (선택)
+        </h2>
+        <p className="text-[11px] text-gray-400 mb-4">
+          배변 상태에 영향을 줄 수 있는 생활 정보를 기록해보세요
+        </p>
+
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-amber-800">생리 일차</p>
+            <span className="text-[10px] text-gray-400">
+              선택하지 않으면 해당 없음
+            </span>
+          </div>
+          <div
+            role="radiogroup"
+            aria-label="생리 일차"
+            className="grid grid-cols-7 gap-1.5"
+          >
+            {[1, 2, 3, 4, 5, 6, 7].map((day) => {
+              const selected = form.menstrualDay === day;
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={day === 7 ? "생리 7일 이상" : `생리 ${day}일차`}
+                  onClick={() =>
+                    setForm((value) => ({
+                      ...value,
+                      menstrualDay: selected ? null : day,
+                    }))
+                  }
+                  className={`min-w-0 rounded-xl border-2 py-2 text-xs font-bold transition-all ${
+                    selected
+                      ? "border-rose-400 bg-rose-50 text-rose-600 shadow-sm"
+                      : "border-gray-200 bg-gray-50 text-gray-400"
+                  }`}
+                >
+                  {day === 7 ? "7↑" : day}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex cursor-pointer items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-xs font-semibold text-gray-500">
+            <input
+              type="checkbox"
+              checked={form.hadEnoughSleep ?? false}
+              onChange={(event) =>
+                setForm((value) => ({
+                  ...value,
+                  hadEnoughSleep: event.target.checked,
+                }))
+              }
+              className="h-4 w-4 shrink-0 accent-amber-700"
+            />
+            충분한 수면
+          </label>
+          <label className="flex cursor-pointer items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-xs font-semibold text-gray-500">
+            <input
+              type="checkbox"
+              checked={form.overate ?? false}
+              onChange={(event) =>
+                setForm((value) => ({
+                  ...value,
+                  overate: event.target.checked,
+                }))
+              }
+              className="h-4 w-4 shrink-0 accent-amber-700"
+            />
+            과식
+          </label>
+        </div>
+      </section>
+
+      <section className="card p-5">
         <h2 className="text-xs font-bold text-amber-500 tracking-widest uppercase mb-4">
           통증 여부
         </h2>

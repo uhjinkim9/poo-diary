@@ -33,6 +33,15 @@ export class DiaryEntryEntity {
   @Column({ type: "varchar", length: 200, nullable: true })
   mealNote!: string | null;
 
+  @Column({ type: "smallint", nullable: true })
+  menstrualDay!: number | null;
+
+  @Column({ type: "boolean", default: false })
+  hadEnoughSleep!: boolean;
+
+  @Column({ type: "boolean", default: false })
+  overate!: boolean;
+
   @Column({ type: "varchar", length: 300, nullable: true })
   memo!: string | null;
 

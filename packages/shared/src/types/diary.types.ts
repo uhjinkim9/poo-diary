@@ -75,6 +75,9 @@ export interface DiaryEntry {
   painLevel?: number; // 1~5
   foods: FoodTag[];
   mealNote?: string;
+  menstrualDay?: number | null; // 1~7 (7은 7일 이상)
+  hadEnoughSleep: boolean;
+  overate: boolean;
   memo?: string;
   recordedAt: string; // ISO 8601
   createdAt: string;
@@ -89,6 +92,9 @@ export interface CreateDiaryDto {
   painLevel?: number;
   foods?: FoodTag[];
   mealNote?: string;
+  menstrualDay?: number | null;
+  hadEnoughSleep?: boolean;
+  overate?: boolean;
   memo?: string;
   recordedAt?: string;
 }

@@ -74,6 +74,28 @@ export class CreateDiaryDto {
   @MaxLength(200)
   mealNote?: string;
 
+  @ApiPropertyOptional({
+    description: "생리 일차 (1~7, 7은 7일 이상)",
+    minimum: 1,
+    maximum: 7,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(7)
+  menstrualDay?: number | null;
+
+  @ApiPropertyOptional({ description: "충분한 수면 여부", default: false })
+  @IsOptional()
+  @IsBoolean()
+  hadEnoughSleep?: boolean;
+
+  @ApiPropertyOptional({ description: "과식 여부", default: false })
+  @IsOptional()
+  @IsBoolean()
+  overate?: boolean;
+
   @ApiPropertyOptional({ description: "메모 (최대 300자)" })
   @IsOptional()
   @IsString()
