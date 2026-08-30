@@ -163,6 +163,202 @@ function bristolLabel(avg: number) {
   return "설사 경향";
 }
 
+const MIN_CONDITION_SAMPLE = 3;
+
+function conditionStats(entries: DiaryEntry[]) {
+  const { count, avgBristol, painCount } = calcStats(entries);
+  return {
+    count,
+    avgBristol,
+    painRate: count === 0 ? 0 : Math.round((painCount / count) * 100),
+  };
+}
+
+interface ComparisonGroup {
+  label: string;
+  entries: DiaryEntry[];
+}
+
+function ConditionComparison({
+  emoji,
+  title,
+  left,
+  right,
+}: {
+  emoji: string;
+  title: string;
+  left: ComparisonGroup;
+  right: ComparisonGroup;
+}) {
+  const leftStats = conditionStats(left.entries);
+  const rightStats = conditionStats(right.entries);
+  const ready =
+    leftStats.count >= MIN_CONDITION_SAMPLE &&
+    rightStats.count >= MIN_CONDITION_SAMPLE;
+
+  return (
+    <div className="card p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-lg">{emoji}</span>
+        <h4 className="font-bold text-sm text-amber-900">{title}</h4>
+      </div>
+      {ready ? (
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { group: left, stats: leftStats },
+            { group: right, stats: rightStats },
+          ].map(({ group, stats }) => (
+            <div key={group.label} className="rounded-2xl bg-amber-50 p-3">
+              <p className="text-xs font-bold text-amber-800 mb-2">
+                {group.label}
+              </p>
+              <p className="text-xs text-gray-600">
+                평균 <strong className="text-amber-900">{stats.avgBristol}형</strong>
+              </p>
+              <p className="text-xs text-gray-600">
+                통증 <strong className="text-red-500">{stats.painRate}%</strong>
+              </p>
+              <p className="mt-1 text-[10px] text-gray-400">{stats.count}건 기준</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl bg-gray-50 px-3 py-3">
+          <p className="text-xs text-gray-600 mb-1">
+            양쪽 조건이 각각 {MIN_CONDITION_SAMPLE}건 이상이면 비교해드려요.
+          </p>
+          <p className="text-[10px] text-gray-400">
+            {left.label} {Math.min(leftStats.count, MIN_CONDITION_SAMPLE)}/
+            {MIN_CONDITION_SAMPLE} · {right.label}{" "}
+            {Math.min(rightStats.count, MIN_CONDITION_SAMPLE)}/
+            {MIN_CONDITION_SAMPLE}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConditionAnalysis({ entries }: { entries: DiaryEntry[] }) {
+  const menstrualGroups = Array.from({ length: 7 }, (_, index) => {
+    const day = index + 1;
+    return {
+      day,
+      entries: entries.filter((entry) => entry.menstrualDay === day),
+    };
+  });
+  const qualifiedMenstrualGroups = menstrualGroups.filter(
+    (group) => group.entries.length >= MIN_CONDITION_SAMPLE,
+  );
+
+  return (
+    <section className="mt-4 flex flex-col gap-3">
+      <div>
+        <p className="text-xs font-medium text-amber-500 tracking-widest uppercase mb-1">
+          Condition
+        </p>
+        <h3 className="text-lg font-black text-amber-900">컨디션별 비교</h3>
+        <p className="mt-1 text-[10px] leading-relaxed text-gray-400">
+          각 조건과 배변 기록의 관계를 비교한 참고 지표이며, 원인을 의미하지는 않아요.
+        </p>
+      </div>
+
+      <ConditionComparison
+        emoji="🩸"
+        title="생리 중과 비생리 중"
+        left={{
+          label: "생리 중",
+          entries: entries.filter((entry) => entry.menstrualDay != null),
+        }}
+        right={{
+          label: "비생리 중",
+          entries: entries.filter((entry) => entry.menstrualDay == null),
+        }}
+      />
+
+      <div className="card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-lg">📅</span>
+          <h4 className="font-bold text-sm text-amber-900">
+            생리 일차별 배변 상태
+          </h4>
+        </div>
+        {qualifiedMenstrualGroups.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {qualifiedMenstrualGroups.map((group) => {
+              const stats = conditionStats(group.entries);
+              return (
+                <div
+                  key={group.day}
+                  className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-2xl bg-rose-50 px-3 py-2.5"
+                >
+                  <div>
+                    <p className="text-xs font-bold text-rose-800">
+                      {group.day === 7 ? "7일 이상" : `${group.day}일차`}
+                    </p>
+                    <p className="text-[10px] text-gray-400">
+                      {stats.count}건 기준
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    평균 <strong className="text-amber-900">{stats.avgBristol}형</strong>
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    통증 <strong className="text-red-500">{stats.painRate}%</strong>
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-gray-50 px-3 py-3">
+            <p className="text-xs text-gray-600">
+              같은 생리 일차의 기록이 {MIN_CONDITION_SAMPLE}건 이상이면 분석해드려요.
+            </p>
+            {menstrualGroups.some((group) => group.entries.length > 0) && (
+              <p className="mt-1 text-[10px] text-gray-400">
+                {menstrualGroups
+                  .filter((group) => group.entries.length > 0)
+                  .map(
+                    (group) =>
+                      `${group.day === 7 ? "7일 이상" : `${group.day}일차`} ${group.entries.length}/${MIN_CONDITION_SAMPLE}`,
+                  )
+                  .join(" · ")}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      <ConditionComparison
+        emoji="😴"
+        title="수면 충분 여부"
+        left={{
+          label: "충분히 잔 날",
+          entries: entries.filter((entry) => entry.hadEnoughSleep),
+        }}
+        right={{
+          label: "부족하게 잔 날",
+          entries: entries.filter((entry) => !entry.hadEnoughSleep),
+        }}
+      />
+
+      <ConditionComparison
+        emoji="🍽️"
+        title="과식 여부"
+        left={{
+          label: "과식한 날",
+          entries: entries.filter((entry) => entry.overate),
+        }}
+        right={{
+          label: "과식하지 않은 날",
+          entries: entries.filter((entry) => !entry.overate),
+        }}
+      />
+    </section>
+  );
+}
+
 interface Advice {
   emoji: string;
   title: string;
@@ -373,6 +569,8 @@ function AnalysisView({ entries }: { entries: DiaryEntry[] }) {
           </p>
         </div>
       ))}
+
+      <ConditionAnalysis entries={entries} />
     </div>
   );
 }
