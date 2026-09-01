@@ -71,6 +71,7 @@ export default function EditDiaryPage() {
       <DiaryForm
         initialValue={initialValue}
         isPending={isPending}
+        allowRecordedAtEdit
         submitLabel="✏️ 수정 완료"
         onSubmit={(value) =>
           updateDiary(value, { onSuccess: () => router.push("/diary") })

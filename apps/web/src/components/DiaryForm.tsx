@@ -35,13 +35,24 @@ const FOOD_TAGS = Object.keys(FOOD_TAG_META) as FoodTag[];
 type DiaryFormProps = {
   initialValue?: CreateDiaryDto;
   isPending?: boolean;
+  allowRecordedAtEdit?: boolean;
   submitLabel: string;
   onSubmit: (value: CreateDiaryDto) => void;
 };
 
+function toLocalDateTimeValue(iso?: string): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const offsetMs = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
 export function DiaryForm({
   initialValue,
   isPending = false,
+  allowRecordedAtEdit = false,
   submitLabel,
   onSubmit,
 }: DiaryFormProps) {
@@ -61,6 +72,32 @@ export function DiaryForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      {allowRecordedAtEdit && (
+        <section className="card p-5">
+          <h2 className="text-xs font-bold text-amber-500 tracking-widest uppercase mb-1">
+            기록 날짜와 시각
+          </h2>
+          <p className="text-[11px] text-gray-400 mb-3">
+            실제로 기록한 날짜와 시각으로 수정할 수 있어요
+          </p>
+          <input
+            type="datetime-local"
+            required
+            value={toLocalDateTimeValue(form.recordedAt)}
+            onChange={(event) => {
+              const value = event.target.value;
+              setForm((current) => ({
+                ...current,
+                recordedAt: value
+                  ? new Date(value).toISOString()
+                  : current.recordedAt,
+              }));
+            }}
+            className="w-full rounded-2xl border border-amber-100 bg-gray-50 px-4 py-3 text-sm text-amber-900 focus:border-amber-400 focus:outline-none transition-colors"
+          />
+        </section>
+      )}
+
       <section className="card p-5">
         <h2 className="text-xs font-bold text-amber-500 tracking-widest uppercase mb-4">
           형태 선택 (브리스톨 척도)
