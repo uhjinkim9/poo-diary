@@ -93,6 +93,161 @@ function calcStats(entries: DiaryEntry[]) {
   return { count: entries.length, avgBristol, painCount };
 }
 
+const WEEKDAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"];
+
+function dateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function calcWeeklyCounts(entries: DiaryEntry[], cursor: Date) {
+  const weekStart = startOfPeriod("week", cursor);
+  const counts = new Map<string, number>();
+
+  for (const entry of entries) {
+    const key = dateKey(new Date(entry.recordedAt));
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  return WEEKDAY_LABELS.map((label, index) => {
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + index);
+    return { label, date, count: counts.get(dateKey(date)) ?? 0 };
+  });
+}
+
+function WeeklyCountChart({
+  entries,
+  cursor,
+}: {
+  entries: DiaryEntry[];
+  cursor: Date;
+}) {
+  const days = calcWeeklyCounts(entries, cursor);
+  const actualMax = Math.max(...days.map((day) => day.count));
+  const scaleMax = Math.max(actualMax, 1);
+  const yTicks = Array.from(
+    new Set([0, Math.ceil(scaleMax / 2), scaleMax]),
+  );
+  const left = 30;
+  const right = 306;
+  const top = 24;
+  const bottom = 132;
+  const xStep = (right - left) / (days.length - 1);
+  const y = (count: number) => bottom - (count / scaleMax) * (bottom - top);
+  const points = days
+    .map((day, index) => `${left + index * xStep},${y(day.count)}`)
+    .join(" ");
+
+  return (
+    <section className="mb-6" aria-labelledby="weekly-count-title">
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div>
+          <h2 id="weekly-count-title" className="text-sm font-bold text-amber-800">
+            📈 일주일간 배변 횟수
+          </h2>
+          <p className="mt-1 text-[10px] text-amber-500">
+            요일별 기록 횟수를 비교해요
+          </p>
+        </div>
+        <p className="text-xs font-bold text-amber-900">
+          최대 {actualMax}회
+        </p>
+      </div>
+
+      <div className="card overflow-hidden p-3">
+        <svg
+          viewBox="0 0 336 172"
+          role="img"
+          aria-label={`월요일부터 일요일까지 배변 횟수: ${days
+            .map((day) => `${day.label}요일 ${day.count}회`)
+            .join(", ")}`}
+          className="h-auto w-full"
+        >
+          <defs>
+            <linearGradient id="weekly-count-area" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {yTicks.map((value) => {
+            const gridY = y(value);
+            return (
+              <g key={value}>
+                <line
+                  x1={left}
+                  x2={right}
+                  y1={gridY}
+                  y2={gridY}
+                  stroke="#fde7c3"
+                  strokeDasharray={value === 0 ? undefined : "3 4"}
+                />
+                <text
+                  x={left - 7}
+                  y={gridY + 3}
+                  textAnchor="end"
+                  className="fill-amber-500 text-[8px]"
+                >
+                  {value}
+                </text>
+              </g>
+            );
+          })}
+
+          <polygon
+            points={`${left},${bottom} ${points} ${right},${bottom}`}
+            fill="url(#weekly-count-area)"
+          />
+          <polyline
+            points={points}
+            fill="none"
+            stroke="#d97706"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {days.map((day, index) => {
+            const pointX = left + index * xStep;
+            const pointY = y(day.count);
+            return (
+              <g key={day.label}>
+                <circle
+                  cx={pointX}
+                  cy={pointY}
+                  r="5"
+                  fill="white"
+                  stroke="#d97706"
+                  strokeWidth="3"
+                />
+                <text
+                  x={pointX}
+                  y={Math.max(pointY - 10, 11)}
+                  textAnchor="middle"
+                  className="fill-amber-900 text-[9px] font-bold"
+                >
+                  {day.count}회
+                </text>
+                <text
+                  x={pointX}
+                  y="156"
+                  textAnchor="middle"
+                  className="fill-amber-700 text-[10px] font-semibold"
+                >
+                  {day.label}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    </section>
+  );
+}
+
 function calcFoodCorrelation(entries: DiaryEntry[]) {
   const map = new Map<
     FoodTag,
@@ -704,6 +859,10 @@ export default function StatsPage() {
           </div>
         ))}
       </div>
+
+      {periodType === "week" && (
+        <WeeklyCountChart entries={filtered} cursor={cursor} />
+      )}
 
       <section>
         <h2 className="text-sm font-bold text-amber-800 mb-3">
