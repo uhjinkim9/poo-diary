@@ -344,6 +344,7 @@ export class AuthService {
     token: string,
     audience: string,
     expectedNonce?: string,
+    allowMissingSubject = false,
   ): Promise<TokenClaims> {
     const parts = token.split(".");
     if (parts.length !== 3)
@@ -383,11 +384,17 @@ export class AuthService {
         `OIDC token audience is invalid (expected=${audience}, actual=${audiences.filter(Boolean).join(",") || "missing"})`,
       );
     if (claims.exp <= Math.floor(Date.now() / 1000))
-      throw new UnauthorizedException("OIDC token is expired");
-    if (!claims.sub)
-      throw new UnauthorizedException("OIDC token subject is missing");
+      throw new UnauthorizedException(
+        `OIDC token is expired (expected audience=${audience})`,
+      );
+    if (!claims.sub && !allowMissingSubject)
+      throw new UnauthorizedException(
+        `OIDC token subject is missing (expected audience=${audience})`,
+      );
     if (expectedNonce !== undefined && claims.nonce !== expectedNonce)
-      throw new UnauthorizedException("OIDC token nonce is invalid");
+      throw new UnauthorizedException(
+        `OIDC token nonce is invalid (expected audience=${audience})`,
+      );
     if (
       expectedNonce !== undefined &&
       audiences.length > 1 &&
@@ -761,8 +768,10 @@ export class AuthService {
     const accessClaims = await this.verifyJwt(
       tokens.access_token,
       "mercury-api",
+      undefined,
+      true,
     );
-    if (accessClaims.sub !== idClaims.sub) {
+    if (accessClaims.sub && accessClaims.sub !== idClaims.sub) {
       throw new UnauthorizedException("OIDC token subjects do not match");
     }
     if (idClaims.email_verified !== true) {
@@ -829,8 +838,13 @@ export class AuthService {
             refresh_token: this.decrypt(session.refreshTokenEncrypted),
           }),
         );
-        const claims = await this.verifyJwt(tokens.access_token, "mercury-api");
-        if (claims.sub !== session.mercuryUserId) return false;
+        const claims = await this.verifyJwt(
+          tokens.access_token,
+          "mercury-api",
+          undefined,
+          true,
+        );
+        if (claims.sub && claims.sub !== session.mercuryUserId) return false;
         this.requirePlatformRole(claims);
         session.accessTokenEncrypted = this.encrypt(tokens.access_token);
         session.refreshTokenEncrypted = this.encrypt(tokens.refresh_token);
