@@ -3,6 +3,7 @@ import {
   ConflictException,
   Controller,
   Get,
+  Logger,
   Post,
   Query,
   Req,
@@ -15,6 +16,8 @@ import { LinkAccountDto } from "./dto/link-account.dto";
 
 @Controller("auth")
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   private redirect(reply: FastifyReply, location: string, cookies: string[]) {
@@ -69,6 +72,9 @@ export class AuthController {
     @Query("error") error?: string,
   ) {
     if (error || !code || !state) {
+      this.logger.warn(
+        `OIDC callback rejected by provider: ${error ?? "missing_code_or_state"}`,
+      );
       const names = this.authService.cookieNames;
       reply.header("set-cookie", [
         this.authService.clearCookie(names.transaction),
@@ -80,7 +86,11 @@ export class AuthController {
     try {
       const result = await this.authService.completeLogin(request, code, state);
       return this.redirect(reply, result.location, result.cookies);
-    } catch {
+    } catch (caught) {
+      const message =
+        caught instanceof Error ? caught.message : "Unknown callback error";
+      const stack = caught instanceof Error ? caught.stack : undefined;
+      this.logger.error(`OIDC callback failed: ${message}`, stack);
       const names = this.authService.cookieNames;
       reply.header("set-cookie", this.authService.clearCookie(names.transaction));
       return reply.code(302).redirect("/profile?oidc_error=callback_failed");

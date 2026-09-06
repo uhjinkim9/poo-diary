@@ -1,8 +1,13 @@
-import { Injectable, ServiceUnavailableException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class MercuryIdentityService {
+  private readonly logger = new Logger(MercuryIdentityService.name);
   private readonly baseUrl: string;
   private readonly linkPath: string;
   private readonly issuer: string;
@@ -85,12 +90,22 @@ export class MercuryIdentityService {
           }),
         },
       );
-    } catch {
+    } catch (error) {
+      this.logger.error(
+        "Mercury Identity service-account authentication failed before receiving a response",
+        error instanceof Error ? error.stack : undefined,
+      );
       throw new ServiceUnavailableException(
         "Mercury Identity 서비스 계정 인증에 연결할 수 없습니다.",
       );
     }
     if (!response.ok) {
+      const responseText = await response.text().catch(() => "");
+      this.logger.error(
+        `Mercury Identity service-account authentication rejected (${response.status})${
+          responseText ? ` - ${responseText.slice(0, 500)}` : ""
+        }`,
+      );
       throw new ServiceUnavailableException(
         `Mercury Identity 서비스 계정 인증 실패 (${response.status})`,
       );
@@ -129,12 +144,22 @@ export class MercuryIdentityService {
         },
         body: JSON.stringify(body),
       });
-    } catch {
+    } catch (error) {
+      this.logger.error(
+        `Mercury Identity request failed before receiving a response: ${path}`,
+        error instanceof Error ? error.stack : undefined,
+      );
       throw new ServiceUnavailableException(
         "Mercury Identity API에 연결할 수 없습니다.",
       );
     }
     if (!response.ok) {
+      const responseText = await response.text().catch(() => "");
+      this.logger.error(
+        `Mercury Identity request rejected: ${path} (${response.status})${
+          responseText ? ` - ${responseText.slice(0, 500)}` : ""
+        }`,
+      );
       throw new ServiceUnavailableException(
         idempotencyKey
           ? `Mercury Identity 계정 연결 실패 (${response.status})`
