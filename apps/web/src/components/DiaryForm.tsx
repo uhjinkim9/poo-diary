@@ -56,12 +56,15 @@ export function DiaryForm({
   submitLabel,
   onSubmit,
 }: DiaryFormProps) {
-  const [form, setForm] = useState<CreateDiaryDto>(
+  const [form, setForm] = useState<CreateDiaryDto>(() =>
     initialValue ?? {
       bristolType: 4,
       color: "brown",
       hasPain: false,
       foods: [],
+      ...(allowRecordedAtEdit
+        ? { recordedAt: new Date().toISOString() }
+        : {}),
     },
   );
 
@@ -78,7 +81,7 @@ export function DiaryForm({
             기록 날짜와 시각
           </h2>
           <p className="text-[11px] text-gray-400 mb-3">
-            실제로 기록한 날짜와 시각으로 수정할 수 있어요
+            실제로 기록한 날짜와 시각을 선택할 수 있어요
           </p>
           <input
             type="datetime-local"

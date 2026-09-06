@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { FindOptionsWhere, IsNull, Repository } from "typeorm";
 import type { FoodCorrelation, FoodTag } from "@poo-diary/shared";
+import type { AuthPrincipal } from "../auth/auth.types";
 import { CreateDiaryDto } from "./dto/create-diary.dto";
 import { UpdateDiaryDto } from "./dto/update-diary.dto";
 import { DiaryEntryEntity } from "./diary.entity";
@@ -13,19 +14,31 @@ export class DiaryService {
     private readonly repo: Repository<DiaryEntryEntity>,
   ) {}
 
-  findAll(userId: string): Promise<DiaryEntryEntity[]> {
-    return this.repo.find({ where: { userId }, order: { recordedAt: "DESC" } });
+  private ownerWhere(principal: AuthPrincipal): FindOptionsWhere<DiaryEntryEntity> {
+    return principal.kind === "mercury"
+      ? { mercuryUserId: principal.mercuryUserId }
+      : { userId: principal.legacyDeviceUserId, mercuryUserId: IsNull() };
   }
 
-  async findOne(id: string, userId: string): Promise<DiaryEntryEntity> {
-    const entry = await this.repo.findOne({ where: { id, userId } });
+  findAll(principal: AuthPrincipal): Promise<DiaryEntryEntity[]> {
+    return this.repo.find({
+      where: this.ownerWhere(principal),
+      order: { recordedAt: "DESC" },
+    });
+  }
+
+  async findOne(id: string, principal: AuthPrincipal): Promise<DiaryEntryEntity> {
+    const entry = await this.repo.findOne({
+      where: { id, ...this.ownerWhere(principal) },
+    });
     if (!entry) throw new NotFoundException(`일지를 찾을 수 없습니다: ${id}`);
     return entry;
   }
 
-  create(userId: string, dto: CreateDiaryDto): Promise<DiaryEntryEntity> {
+  create(principal: AuthPrincipal, dto: CreateDiaryDto): Promise<DiaryEntryEntity> {
     const entry = this.repo.create({
-      userId,
+      userId: principal.kind === "legacy" ? principal.legacyDeviceUserId : null,
+      mercuryUserId: principal.kind === "mercury" ? principal.mercuryUserId : null,
       bristolType: dto.bristolType,
       color: dto.color,
       hasPain: dto.hasPain,
@@ -43,10 +56,10 @@ export class DiaryService {
 
   async update(
     id: string,
-    userId: string,
+    principal: AuthPrincipal,
     dto: UpdateDiaryDto,
   ): Promise<DiaryEntryEntity> {
-    const existing = await this.findOne(id, userId);
+    const existing = await this.findOne(id, principal);
     const merged = this.repo.merge(existing, {
       ...dto,
       recordedAt: dto.recordedAt
@@ -56,14 +69,14 @@ export class DiaryService {
     return this.repo.save(merged);
   }
 
-  async remove(id: string, userId: string): Promise<void> {
-    const entry = await this.findOne(id, userId);
+  async remove(id: string, principal: AuthPrincipal): Promise<void> {
+    const entry = await this.findOne(id, principal);
     await this.repo.remove(entry);
   }
 
   /** 식품 태그별 배변 상관관계 집계 */
-  async getFoodCorrelation(userId: string): Promise<FoodCorrelation[]> {
-    const entries = await this.repo.find({ where: { userId } });
+  async getFoodCorrelation(principal: AuthPrincipal): Promise<FoodCorrelation[]> {
+    const entries = await this.repo.find({ where: this.ownerWhere(principal) });
     const map = new Map<
       FoodTag,
       { bristolSum: number; painCount: number; count: number }

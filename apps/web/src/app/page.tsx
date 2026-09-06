@@ -27,9 +27,32 @@ function calcLevel(count: number) {
   return { ...lv, next, count };
 }
 
+function calcBestStreak(recordedDates: string[]): number {
+  const days = Array.from(
+    new Set(
+      recordedDates.map((value) => {
+        const date = new Date(value);
+        return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) /
+          86_400_000;
+      }),
+    ),
+  ).sort((a, b) => a - b);
+
+  let best = 0;
+  let current = 0;
+  let previous: number | undefined;
+  for (const day of days) {
+    current = previous !== undefined && day === previous + 1 ? current + 1 : 1;
+    best = Math.max(best, current);
+    previous = day;
+  }
+  return best;
+}
+
 export default function HomePage() {
   const { data: entries = [] } = useDiaryList();
   const lv = calcLevel(entries.length);
+  const bestStreak = calcBestStreak(entries.map((entry) => entry.recordedAt));
   const tip = TIPS[new Date().getDate() % TIPS.length];
 
   return (
@@ -72,8 +95,13 @@ export default function HomePage() {
           )}
         </div>
         {[
-          { emoji: "📊", label: "통계", href: "/stats" },
-          { emoji: "🏆", label: "연속기록", href: "/stats" },
+          { emoji: "📊", label: "통계", value: undefined, href: "/stats" },
+          {
+            emoji: "🏆",
+            label: "최고 연속",
+            value: `${bestStreak}일`,
+            href: "/stats",
+          },
         ].map((item) => (
           <Link
             key={item.label}
@@ -84,6 +112,11 @@ export default function HomePage() {
             <span className="text-xs font-medium text-amber-700">
               {item.label}
             </span>
+            {item.value && (
+              <span className="text-[10px] font-bold text-amber-500">
+                {item.value}
+              </span>
+            )}
           </Link>
         ))}
       </div>

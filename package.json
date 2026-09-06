@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "pnpm -r --parallel --filter @poo-diary/api --filter @poo-diary/web dev",
     "build": "turbo run build",
     "start": "turbo run start",
     "lint": "turbo run lint",

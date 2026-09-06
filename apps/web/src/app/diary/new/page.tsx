@@ -25,6 +25,7 @@ export default function NewDiaryPage() {
       </header>
 
       <DiaryForm
+        allowRecordedAtEdit
         isPending={isPending}
         submitLabel="💾 저장하기"
         onSubmit={(value) =>
