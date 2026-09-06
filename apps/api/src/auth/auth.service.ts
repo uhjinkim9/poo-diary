@@ -374,15 +374,20 @@ export class AuthService {
       Buffer.from(parts[1], "base64url").toString("utf8"),
     ) as TokenClaims;
     const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
-    if (
-      claims.iss !== this.issuer ||
-      !audiences.includes(audience) ||
-      claims.exp <= Math.floor(Date.now() / 1000) ||
-      !claims.sub ||
-      (expectedNonce !== undefined && claims.nonce !== expectedNonce)
-    ) {
-      throw new UnauthorizedException("OIDC token claims are invalid");
-    }
+    if (claims.iss !== this.issuer)
+      throw new UnauthorizedException(
+        `OIDC token issuer is invalid (expected=${this.issuer}, actual=${claims.iss ?? "missing"})`,
+      );
+    if (!audiences.includes(audience))
+      throw new UnauthorizedException(
+        `OIDC token audience is invalid (expected=${audience}, actual=${audiences.filter(Boolean).join(",") || "missing"})`,
+      );
+    if (claims.exp <= Math.floor(Date.now() / 1000))
+      throw new UnauthorizedException("OIDC token is expired");
+    if (!claims.sub)
+      throw new UnauthorizedException("OIDC token subject is missing");
+    if (expectedNonce !== undefined && claims.nonce !== expectedNonce)
+      throw new UnauthorizedException("OIDC token nonce is invalid");
     if (
       expectedNonce !== undefined &&
       audiences.length > 1 &&
