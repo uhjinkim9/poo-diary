@@ -105,6 +105,14 @@ API 환경변수만 변경해 배포 단계를 조절할 수 있다.
 - `OIDC_MIGRATION_MODE=required`: 충분한 전환 기간 이후 `나중에 하기`를 제거한다.
 - `OIDC_REMINDER_DAYS=3`: 비차단 단계의 재안내 간격이다.
 
+## 로그인 유지 시간
+
+- `OIDC_APP_SESSION_DAYS=30`: 푸다이어리의 HttpOnly 세션 쿠키와 서버 세션 상한이다(허용 범위 1~90일).
+- Keycloak Realm의 `SSO Session Idle`은 사용자가 다시 방문하기 전까지 허용할 비활성 시간보다 길게 설정한다. 자주 사용하는 개인 서비스라면 7일을 시작값으로 두고 운영 상황에 맞춰 조정할 수 있다.
+- `SSO Session Max`와 Client Session Idle/Max도 앱 세션 상한과 모순되지 않게 확인한다. Keycloak 세션이 만료되거나 폐기되면 푸다이어리의 30일 앱 세션이 남아 있어도 재로그인이 필요하다.
+
+기존 구현은 최초 토큰 응답의 `refresh_expires_in`을 앱 세션 만료 시각으로 고정했다. 이 값은 토큰 갱신 시 연장될 수 있으므로, 현재 구현은 앱 세션 상한을 별도로 유지하고 액세스 토큰 만료 시 Keycloak 갱신을 시도한다.
+
 현재 Helm 기본값은 `prompt`, 3일이다. 미연결 legacy 세션에만 안내하며 중앙 앱 세션이 유효하면 OIDC 이동 없이 진입한다.
 
 ## 중앙 Identity 역방향 연결

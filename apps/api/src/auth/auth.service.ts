@@ -64,7 +64,7 @@ interface TokenClaims {
   resource_access?: Record<string, { roles?: string[] }>;
 }
 
-const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
+const DEFAULT_SESSION_TTL_DAYS = 30;
 const DEVICE_TTL_SECONDS = 60 * 60 * 24 * 365;
 const AUTH_TRANSACTION_TTL_MS = 10 * 60 * 1000;
 
@@ -135,6 +135,19 @@ export class AuthService {
       "OIDC_POST_LOGOUT_REDIRECT_URI",
       `${this.appBaseUrl}/`,
     );
+  }
+
+  private get sessionTtlSeconds(): number {
+    const configuredDays = Number(
+      this.config.get<string>(
+        "OIDC_APP_SESSION_DAYS",
+        String(DEFAULT_SESSION_TTL_DAYS),
+      ),
+    );
+    const days = Number.isFinite(configuredDays)
+      ? Math.min(90, Math.max(1, configuredDays))
+      : DEFAULT_SESSION_TTL_DAYS;
+    return Math.floor(days * 24 * 60 * 60);
   }
 
   private hash(value: string): string {
@@ -713,14 +726,10 @@ export class AuthService {
           ? this.encrypt(tokens.id_token)
           : null,
         accessTokenExpiresAt: new Date(now + tokens.expires_in * 1000),
-        expiresAt: new Date(
-          now +
-            Math.min(
-              tokens.refresh_expires_in ?? SESSION_TTL_SECONDS,
-              SESSION_TTL_SECONDS,
-            ) *
-              1000,
-        ),
+        // Keycloak의 refresh_expires_in은 유휴 세션 정책에 따라 짧게 내려올 수
+        // 있고, refresh할 때 다시 연장된다. 최초 응답값으로 앱 세션 자체를
+        // 고정하면 토큰을 갱신할 기회 없이 로그아웃되므로 앱의 상한만 저장한다.
+        expiresAt: new Date(now + this.sessionTtlSeconds * 1000),
         lastSeenAt: new Date(now),
       }),
     );
@@ -806,7 +815,7 @@ export class AuthService {
       )}`,
       cookies: [
         this.cookie(this.cookieNames.session, sessionId, {
-          maxAge: SESSION_TTL_SECONDS,
+          maxAge: this.sessionTtlSeconds,
         }),
         this.cookie(this.cookieNames.ssoHint, "1", {
           maxAge: DEVICE_TTL_SECONDS,
