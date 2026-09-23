@@ -112,7 +112,7 @@ export default function HomePage() {
       <div className="mb-6">
         <button
           type="button"
-          disabled={isSettingNoBowelMovement}
+          disabled={isSettingNoBowel}
           onClick={toggleNoBowelMovement}
           className={`w-full rounded-2xl border py-3 text-sm font-bold transition-colors disabled:opacity-50 ${
             hasNoBowelMovement
@@ -120,7 +120,7 @@ export default function HomePage() {
               : "border-gray-200 bg-white text-gray-500"
           }`}
         >
-          {isSettingNoBowelMovement
+          {isSettingNoBowel
             ? "저장하는 중..."
             : hasNoBowelMovement
               ? "오늘 배변 없음을 기록했어요 · 취소하기"
