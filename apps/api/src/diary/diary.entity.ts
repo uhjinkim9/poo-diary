@@ -52,6 +52,24 @@ export class DiaryEntryEntity {
   @Column({ type: "boolean", default: false })
   overate!: boolean;
 
+  @Column({ type: "boolean", default: false })
+  hadUrgency!: boolean;
+
+  @Column({ type: "boolean", default: false })
+  wasHardToHold!: boolean;
+
+  @Column({ type: "boolean", default: false })
+  hadToStrain!: boolean;
+
+  @Column({ type: "boolean", default: false })
+  feltIncomplete!: boolean;
+
+  @Column({ type: "boolean", default: false })
+  feltRelieved!: boolean;
+
+  @Column({ type: "boolean", default: false })
+  spentLongInToilet!: boolean;
+
   @Column({ type: "varchar", length: 300, nullable: true })
   memo!: string | null;
 

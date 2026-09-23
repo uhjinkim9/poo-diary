@@ -6,6 +6,7 @@ export const DIARY_QUERY_KEYS = {
   all: ["diary"] as const,
   detail: (id: string) => ["diary", id] as const,
   foodCorrelation: ["diary", "stats", "food-correlation"] as const,
+  dailyStatus: ["diary", "daily-status"] as const,
 };
 
 /** 전체 배변 일지 목록 조회 */
@@ -32,6 +33,7 @@ export function useCreateDiary() {
     mutationFn: (dto: CreateDiaryDto) => diaryApi.create(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DIARY_QUERY_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: DIARY_QUERY_KEYS.dailyStatus });
     },
   });
 }
@@ -44,6 +46,7 @@ export function useUpdateDiary(id: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DIARY_QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: DIARY_QUERY_KEYS.detail(id) });
+      queryClient.invalidateQueries({ queryKey: DIARY_QUERY_KEYS.dailyStatus });
     },
   });
 }
@@ -55,6 +58,26 @@ export function useDeleteDiary() {
     mutationFn: (id: string) => diaryApi.remove(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DIARY_QUERY_KEYS.all });
+    },
+  });
+}
+
+/** 날짜별 ‘배변 없음’ 상태 조회 */
+export function useDailyBowelStatuses() {
+  return useQuery({
+    queryKey: DIARY_QUERY_KEYS.dailyStatus,
+    queryFn: diaryApi.getDailyStatuses,
+  });
+}
+
+/** 날짜별 ‘배변 없음’ 상태 기록 또는 해제 */
+export function useSetNoBowelMovement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ date, noBowelMovement }: { date: string; noBowelMovement: boolean }) =>
+      diaryApi.setNoBowelMovement(date, noBowelMovement),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: DIARY_QUERY_KEYS.dailyStatus });
     },
   });
 }

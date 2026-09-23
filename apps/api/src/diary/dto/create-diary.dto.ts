@@ -96,6 +96,36 @@ export class CreateDiaryDto {
   @IsBoolean()
   overate?: boolean;
 
+  @ApiPropertyOptional({ description: "급박감 여부", default: false })
+  @IsOptional()
+  @IsBoolean()
+  hadUrgency?: boolean;
+
+  @ApiPropertyOptional({ description: "참기 어려움 여부", default: false })
+  @IsOptional()
+  @IsBoolean()
+  wasHardToHold?: boolean;
+
+  @ApiPropertyOptional({ description: "힘을 많이 준 여부", default: false })
+  @IsOptional()
+  @IsBoolean()
+  hadToStrain?: boolean;
+
+  @ApiPropertyOptional({ description: "잔변감 여부", default: false })
+  @IsOptional()
+  @IsBoolean()
+  feltIncomplete?: boolean;
+
+  @ApiPropertyOptional({ description: "개운함 여부", default: false })
+  @IsOptional()
+  @IsBoolean()
+  feltRelieved?: boolean;
+
+  @ApiPropertyOptional({ description: "화장실에 오래 있었음 여부", default: false })
+  @IsOptional()
+  @IsBoolean()
+  spentLongInToilet?: boolean;
+
   @ApiPropertyOptional({ description: "메모 (최대 300자)" })
   @IsOptional()
   @IsString()

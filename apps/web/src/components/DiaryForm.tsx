@@ -32,6 +32,15 @@ const COLOR_OPTIONS: { value: StoolColor; label: string; hex: string }[] = [
 
 const FOOD_TAGS = Object.keys(FOOD_TAG_META) as FoodTag[];
 
+const EXPERIENCE_OPTIONS = [
+  { key: "hadUrgency", label: "급했어요", emoji: "⚡" },
+  { key: "wasHardToHold", label: "참기 어려웠어요", emoji: "⏱️" },
+  { key: "hadToStrain", label: "힘을 많이 줬어요", emoji: "💪" },
+  { key: "feltIncomplete", label: "잔변감이 있어요", emoji: "🫤" },
+  { key: "feltRelieved", label: "시원했어요", emoji: "✨" },
+  { key: "spentLongInToilet", label: "화장실에 오래 있었어요", emoji: "⌛" },
+] as const;
+
 type DiaryFormProps = {
   initialValue?: CreateDiaryDto;
   isPending?: boolean;
@@ -375,6 +384,38 @@ export function DiaryForm({
             </div>
           </div>
         )}
+      </section>
+
+      <section className="card p-5">
+        <h2 className="text-xs font-bold text-amber-500 tracking-widest uppercase mb-1">
+          배변 경험 (선택)
+        </h2>
+        <p className="mb-4 text-[11px] text-gray-400">
+          오늘 배변할 때 느낀 점을 골라주세요. 여러 개 선택할 수 있어요.
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {EXPERIENCE_OPTIONS.map(({ key, label, emoji }) => {
+            const selected = form[key] ?? false;
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={selected}
+                onClick={() =>
+                  setForm((value) => ({ ...value, [key]: !selected }))
+                }
+                className={`rounded-2xl border-2 px-3 py-3 text-left text-xs font-semibold transition-all ${
+                  selected
+                    ? "border-amber-500 bg-amber-50 text-amber-800"
+                    : "border-gray-200 bg-gray-50 text-gray-500"
+                }`}
+              >
+                <span className="mr-1.5">{emoji}</span>
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       <section className="card p-5">

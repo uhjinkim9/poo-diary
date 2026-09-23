@@ -2,6 +2,7 @@ import { apiClient } from "@/lib/apiClient";
 import type {
   CreateDiaryDto,
   DiaryEntry,
+  DailyBowelStatus,
   FoodCorrelation,
   UpdateDiaryDto,
 } from "@poo-diary/shared";
@@ -36,5 +37,23 @@ export const diaryApi = {
 
   remove: async (id: string): Promise<void> => {
     await apiClient.delete(`/diary/${id}`);
+  },
+
+  getDailyStatuses: async (): Promise<DailyBowelStatus[]> => {
+    const { data } = await apiClient.get<DailyBowelStatus[]>(
+      "/diary/daily-status",
+    );
+    return Array.isArray(data) ? data : [];
+  },
+
+  setNoBowelMovement: async (
+    date: string,
+    noBowelMovement: boolean,
+  ): Promise<DailyBowelStatus | null> => {
+    const { data } = await apiClient.put<DailyBowelStatus | null>(
+      `/diary/daily-status/${date}`,
+      { noBowelMovement },
+    );
+    return data;
   },
 };

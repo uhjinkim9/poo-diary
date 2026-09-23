@@ -78,6 +78,12 @@ export interface DiaryEntry {
   menstrualDay?: number | null; // 1~7 (7은 7일 이상)
   hadEnoughSleep: boolean;
   overate: boolean;
+  hadUrgency: boolean;
+  wasHardToHold: boolean;
+  hadToStrain: boolean;
+  feltIncomplete: boolean;
+  feltRelieved: boolean;
+  spentLongInToilet: boolean;
   memo?: string;
   recordedAt: string; // ISO 8601
   createdAt: string;
@@ -95,12 +101,24 @@ export interface CreateDiaryDto {
   menstrualDay?: number | null;
   hadEnoughSleep?: boolean;
   overate?: boolean;
+  hadUrgency?: boolean;
+  wasHardToHold?: boolean;
+  hadToStrain?: boolean;
+  feltIncomplete?: boolean;
+  feltRelieved?: boolean;
+  spentLongInToilet?: boolean;
   memo?: string;
   recordedAt?: string;
 }
 
 /** 배변 일지 수정 DTO */
 export interface UpdateDiaryDto extends Partial<CreateDiaryDto> {}
+
+/** 날짜 단위 배변 상태. 실제 배변 기록과 분리해 저장한다. */
+export interface DailyBowelStatus {
+  date: string; // YYYY-MM-DD, Asia/Seoul 기준
+  noBowelMovement: boolean;
+}
 
 /** 식품별 배변 상관관계 통계 */
 export interface FoodCorrelation {

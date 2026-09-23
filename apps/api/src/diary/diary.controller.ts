@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Req,
   UseGuards,
 } from "@nestjs/common";
@@ -17,6 +18,7 @@ import { AuthGuard } from "../auth/auth.guard";
 import { DiaryService } from "./diary.service";
 import { CreateDiaryDto } from "./dto/create-diary.dto";
 import { UpdateDiaryDto } from "./dto/update-diary.dto";
+import { SetDailyBowelStatusDto } from "./dto/set-daily-bowel-status.dto";
 
 @ApiTags("diary")
 @UseGuards(AuthGuard)
@@ -34,6 +36,26 @@ export class DiaryController {
   @Get("stats/food-correlation")
   getFoodCorrelation(@Req() request: FastifyRequest) {
     return this.diaryService.getFoodCorrelation(request.authPrincipal!);
+  }
+
+  @ApiOperation({ summary: "날짜별 배변 없음 상태 조회" })
+  @Get("daily-status")
+  findDailyStatuses(@Req() request: FastifyRequest) {
+    return this.diaryService.findDailyStatuses(request.authPrincipal!);
+  }
+
+  @ApiOperation({ summary: "날짜별 배변 없음 상태 설정" })
+  @Put("daily-status/:date")
+  setDailyStatus(
+    @Req() request: FastifyRequest,
+    @Param("date") date: string,
+    @Body() dto: SetDailyBowelStatusDto,
+  ) {
+    return this.diaryService.setNoBowelMovement(
+      request.authPrincipal!,
+      date,
+      dto.noBowelMovement,
+    );
   }
 
   @ApiOperation({ summary: "배변 일지 단건 조회" })

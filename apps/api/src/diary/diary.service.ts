@@ -1,23 +1,70 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { FindOptionsWhere, IsNull, Repository } from "typeorm";
-import type { FoodCorrelation, FoodTag } from "@poo-diary/shared";
+import type {
+  DailyBowelStatus,
+  FoodCorrelation,
+  FoodTag,
+} from "@poo-diary/shared";
 import type { AuthPrincipal } from "../auth/auth.types";
 import { CreateDiaryDto } from "./dto/create-diary.dto";
 import { UpdateDiaryDto } from "./dto/update-diary.dto";
 import { DiaryEntryEntity } from "./diary.entity";
+import { DailyBowelStatusEntity } from "./daily-bowel-status.entity";
 
 @Injectable()
 export class DiaryService {
   constructor(
     @InjectRepository(DiaryEntryEntity)
     private readonly repo: Repository<DiaryEntryEntity>,
+    @InjectRepository(DailyBowelStatusEntity)
+    private readonly dailyStatusRepo: Repository<DailyBowelStatusEntity>,
   ) {}
 
   private ownerWhere(principal: AuthPrincipal): FindOptionsWhere<DiaryEntryEntity> {
     return principal.kind === "mercury"
       ? { mercuryUserId: principal.mercuryUserId }
       : { userId: principal.legacyDeviceUserId, mercuryUserId: IsNull() };
+  }
+
+  private dailyStatusOwnerWhere(
+    principal: AuthPrincipal,
+  ): FindOptionsWhere<DailyBowelStatusEntity> {
+    return principal.kind === "mercury"
+      ? { mercuryUserId: principal.mercuryUserId }
+      : { userId: principal.legacyDeviceUserId, mercuryUserId: IsNull() };
+  }
+
+  private dateInKorea(value: Date): string {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(value);
+    const get = (type: string) =>
+      parts.find((part) => part.type === type)?.value;
+    return `${get("year")}-${get("month")}-${get("day")}`;
+  }
+
+  private assertStatusDate(date: string): void {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      throw new BadRequestException("날짜는 YYYY-MM-DD 형식이어야 합니다.");
+    }
+  }
+
+  private toDailyStatus(
+    status: DailyBowelStatusEntity,
+  ): DailyBowelStatus {
+    return {
+      date: status.statusDate,
+      noBowelMovement: status.noBowelMovement,
+    };
   }
 
   findAll(principal: AuthPrincipal): Promise<DiaryEntryEntity[]> {
@@ -35,7 +82,11 @@ export class DiaryService {
     return entry;
   }
 
-  create(principal: AuthPrincipal, dto: CreateDiaryDto): Promise<DiaryEntryEntity> {
+  async create(
+    principal: AuthPrincipal,
+    dto: CreateDiaryDto,
+  ): Promise<DiaryEntryEntity> {
+    const recordedAt = dto.recordedAt ? new Date(dto.recordedAt) : new Date();
     const entry = this.repo.create({
       userId: principal.kind === "legacy" ? principal.legacyDeviceUserId : null,
       mercuryUserId: principal.kind === "mercury" ? principal.mercuryUserId : null,
@@ -48,10 +99,18 @@ export class DiaryService {
       menstrualDay: dto.menstrualDay ?? null,
       hadEnoughSleep: dto.hadEnoughSleep ?? false,
       overate: dto.overate ?? false,
+      hadUrgency: dto.hadUrgency ?? false,
+      wasHardToHold: dto.wasHardToHold ?? false,
+      hadToStrain: dto.hadToStrain ?? false,
+      feltIncomplete: dto.feltIncomplete ?? false,
+      feltRelieved: dto.feltRelieved ?? false,
+      spentLongInToilet: dto.spentLongInToilet ?? false,
       memo: dto.memo ?? null,
-      recordedAt: dto.recordedAt ? new Date(dto.recordedAt) : new Date(),
+      recordedAt,
     });
-    return this.repo.save(entry);
+    const saved = await this.repo.save(entry);
+    await this.clearNoBowelMovement(principal, this.dateInKorea(recordedAt));
+    return saved;
   }
 
   async update(
@@ -66,12 +125,73 @@ export class DiaryService {
         ? new Date(dto.recordedAt)
         : existing.recordedAt,
     });
-    return this.repo.save(merged);
+    const saved = await this.repo.save(merged);
+    await this.clearNoBowelMovement(
+      principal,
+      this.dateInKorea(saved.recordedAt),
+    );
+    return saved;
   }
 
   async remove(id: string, principal: AuthPrincipal): Promise<void> {
     const entry = await this.findOne(id, principal);
     await this.repo.remove(entry);
+  }
+
+  async findDailyStatuses(
+    principal: AuthPrincipal,
+  ): Promise<DailyBowelStatus[]> {
+    const statuses = await this.dailyStatusRepo.find({
+      where: this.dailyStatusOwnerWhere(principal),
+      order: { statusDate: "DESC" },
+    });
+    return statuses.map((status) => this.toDailyStatus(status));
+  }
+
+  async setNoBowelMovement(
+    principal: AuthPrincipal,
+    date: string,
+    noBowelMovement: boolean,
+  ): Promise<DailyBowelStatus | null> {
+    this.assertStatusDate(date);
+    if (!noBowelMovement) {
+      await this.clearNoBowelMovement(principal, date);
+      return null;
+    }
+
+    const entries = await this.repo.find({ where: this.ownerWhere(principal) });
+    if (entries.some((entry) => this.dateInKorea(entry.recordedAt) === date)) {
+      throw new ConflictException(
+        "이 날짜에는 이미 배변 기록이 있어 ‘배변 없음’으로 표시할 수 없습니다.",
+      );
+    }
+
+    const where = {
+      ...this.dailyStatusOwnerWhere(principal),
+      statusDate: date,
+    };
+    const existing = await this.dailyStatusRepo.findOne({ where });
+    const saved = await this.dailyStatusRepo.save(
+      existing ??
+        this.dailyStatusRepo.create({
+          userId: principal.kind === "legacy" ? principal.legacyDeviceUserId : null,
+          mercuryUserId:
+            principal.kind === "mercury" ? principal.mercuryUserId : null,
+          statusDate: date,
+          noBowelMovement: true,
+        }),
+    );
+    return this.toDailyStatus(saved);
+  }
+
+  private async clearNoBowelMovement(
+    principal: AuthPrincipal,
+    date: string,
+  ): Promise<void> {
+    await this.dailyStatusRepo.delete({
+      ...this.dailyStatusOwnerWhere(principal),
+      statusDate: date,
+    });
   }
 
   /** 식품 태그별 배변 상관관계 집계 */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useDiaryList } from "@/hooks/useDiary";
+import { useDailyBowelStatuses, useDiaryList } from "@/hooks/useDiary";
 import { FOOD_TAG_META } from "@poo-diary/shared";
 import type { DiaryEntry, FoodTag } from "@poo-diary/shared";
 import { useMemo, useState } from "react";
@@ -732,6 +732,7 @@ function AnalysisView({ entries }: { entries: DiaryEntry[] }) {
 
 export default function StatsPage() {
   const { data: allEntries = [] } = useDiaryList();
+  const { data: dailyStatuses = [] } = useDailyBowelStatuses();
   const [periodType, setPeriodType] = useState<PeriodType>("week");
   const [cursor, setCursor] = useState(() => new Date());
 
@@ -751,6 +752,17 @@ export default function StatsPage() {
   const periodTitle = formatPeriod(periodType, cursor);
 
   const { count, avgBristol, painCount } = calcStats(filtered);
+  const noBowelMovementDays = useMemo(() => {
+    const noBowelStatuses = dailyStatuses.filter(
+      (status) => status.noBowelMovement,
+    );
+    if (periodType === "all") return noBowelStatuses.length;
+    const { start, end } = getPeriodRange(periodType, cursor);
+    return noBowelStatuses.filter((status) => {
+      const date = new Date(`${status.date}T00:00:00`);
+      return date >= start && date < end;
+    }).length;
+  }, [cursor, dailyStatuses, periodType]);
   const streak = calcStreak(allEntries);
   const foodCorrelations = calcFoodCorrelation(filtered);
   const topMenus = calcTopMenus(filtered);
@@ -841,6 +853,11 @@ export default function StatsPage() {
             label: "통증",
             value: painCount,
             unit: "회",
+          },
+          {
+            label: "배변 없음",
+            value: noBowelMovementDays,
+            unit: "일",
           },
         ].map((stat) => (
           <div key={stat.label} className="card min-w-0 p-4">

@@ -1,7 +1,11 @@
 "use client";
 
 import { DiaryForm } from "@/components/DiaryForm";
-import { useDiaryDetail, useUpdateDiary } from "@/hooks/useDiary";
+import {
+  useDeleteDiary,
+  useDiaryDetail,
+  useUpdateDiary,
+} from "@/hooks/useDiary";
 import type { CreateDiaryDto } from "@poo-diary/shared";
 import { useParams, useRouter } from "next/navigation";
 
@@ -10,6 +14,18 @@ export default function EditDiaryPage() {
   const { id } = useParams<{ id: string }>();
   const { data: entry, isLoading, isError } = useDiaryDetail(id);
   const { mutate: updateDiary, isPending } = useUpdateDiary(id);
+  const {
+    mutate: deleteDiary,
+    isPending: isDeleting,
+    isError: isDeleteError,
+  } = useDeleteDiary();
+
+  function remove() {
+    if (!confirm("이 기록을 삭제할까요? 삭제한 기록은 되돌릴 수 없어요.")) {
+      return;
+    }
+    deleteDiary(id, { onSuccess: () => router.replace("/diary") });
+  }
 
   if (isLoading) {
     return (
@@ -48,6 +64,12 @@ export default function EditDiaryPage() {
     menstrualDay: entry.menstrualDay,
     hadEnoughSleep: entry.hadEnoughSleep,
     overate: entry.overate,
+    hadUrgency: entry.hadUrgency,
+    wasHardToHold: entry.wasHardToHold,
+    hadToStrain: entry.hadToStrain,
+    feltIncomplete: entry.feltIncomplete,
+    feltRelieved: entry.feltRelieved,
+    spentLongInToilet: entry.spentLongInToilet,
     memo: entry.memo,
     recordedAt: entry.recordedAt,
   };
@@ -70,13 +92,32 @@ export default function EditDiaryPage() {
 
       <DiaryForm
         initialValue={initialValue}
-        isPending={isPending}
+        isPending={isPending || isDeleting}
         allowRecordedAtEdit
         submitLabel="✏️ 수정 완료"
         onSubmit={(value) =>
           updateDiary(value, { onSuccess: () => router.push("/diary") })
         }
       />
+
+      <section className="mt-8 border-t border-red-100 pt-5 pb-8">
+        <p className="mb-3 text-xs leading-relaxed text-gray-400">
+          삭제한 기록은 복구할 수 없어요.
+        </p>
+        {isDeleteError && (
+          <p className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-500">
+            기록을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.
+          </p>
+        )}
+        <button
+          type="button"
+          disabled={isDeleting || isPending}
+          onClick={remove}
+          className="w-full rounded-2xl border border-red-200 bg-red-50 py-3 text-sm font-bold text-red-500 transition-colors active:scale-[0.98] disabled:opacity-50"
+        >
+          {isDeleting ? "삭제하는 중..." : "이 기록 삭제하기"}
+        </button>
+      </section>
     </main>
   );
 }

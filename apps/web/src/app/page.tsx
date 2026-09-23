@@ -1,7 +1,12 @@
 "use client";
 
-import { useDiaryList } from "@/hooks/useDiary";
+import {
+  useDailyBowelStatuses,
+  useDiaryList,
+  useSetNoBowelMovement,
+} from "@/hooks/useDiary";
 import Link from "next/link";
+import { useState } from "react";
 
 const TIPS = [
   "4형이 가장 이상적인 형태예요 💩",
@@ -49,11 +54,34 @@ function calcBestStreak(recordedDates: string[]): number {
   return best;
 }
 
+function localDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function HomePage() {
   const { data: entries = [] } = useDiaryList();
+  const { data: dailyStatuses = [] } = useDailyBowelStatuses();
+  const { mutate: setNoBowelMovement, isPending: isSettingNoBowel } =
+    useSetNoBowelMovement();
+  const [noBowelError, setNoBowelError] = useState(false);
   const lv = calcLevel(entries.length);
   const bestStreak = calcBestStreak(entries.map((entry) => entry.recordedAt));
   const tip = TIPS[new Date().getDate() % TIPS.length];
+  const today = localDateKey(new Date());
+  const hasNoBowelMovement = dailyStatuses.some(
+    (status) => status.date === today && status.noBowelMovement,
+  );
+
+  function toggleNoBowelMovement() {
+    setNoBowelError(false);
+    setNoBowelMovement(
+      { date: today, noBowelMovement: !hasNoBowelMovement },
+      { onError: () => setNoBowelError(true) },
+    );
+  }
 
   return (
     <main className="min-h-[100dvh] flex flex-col p-5 max-w-md mx-auto">
@@ -80,6 +108,30 @@ export default function HomePage() {
       >
         기록하기 💩
       </Link>
+
+      <div className="mb-6">
+        <button
+          type="button"
+          disabled={isSettingNoBowelMovement}
+          onClick={toggleNoBowelMovement}
+          className={`w-full rounded-2xl border py-3 text-sm font-bold transition-colors disabled:opacity-50 ${
+            hasNoBowelMovement
+              ? "border-sky-200 bg-sky-50 text-sky-700"
+              : "border-gray-200 bg-white text-gray-500"
+          }`}
+        >
+          {isSettingNoBowelMovement
+            ? "저장하는 중..."
+            : hasNoBowelMovement
+              ? "오늘 배변 없음을 기록했어요 · 취소하기"
+              : "오늘 배변 없었어요"}
+        </button>
+        {noBowelError && (
+          <p className="mt-2 text-center text-xs text-red-500">
+            오늘 배변 기록이 있으면 ‘배변 없음’으로 표시할 수 없어요.
+          </p>
+        )}
+      </div>
 
       {/* 퀘 이모지 그리드 */}
       <div className="grid grid-cols-3 gap-3 mb-6">

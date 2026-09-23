@@ -5,6 +5,7 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { DiaryModule } from "./diary/diary.module";
 import { DiaryEntryEntity } from "./diary/diary.entity";
+import { DailyBowelStatusEntity } from "./diary/daily-bowel-status.entity";
 import { AuthModule } from "./auth/auth.module";
 import {
   AccountLinkEntity,
@@ -16,6 +17,7 @@ import {
 } from "./auth/auth.entities";
 import { AddMercuryIdentity1725321600000 } from "./migrations/1725321600000-add-mercury-identity";
 import { AddAccountAuditLogs1788624000000 } from "./migrations/1788624000000-add-account-audit-logs";
+import { AddBowelExperienceAndDailyStatus1790208000000 } from "./migrations/1790208000000-add-bowel-experience-and-daily-status";
 
 @Module({
   imports: [
@@ -31,6 +33,7 @@ import { AddAccountAuditLogs1788624000000 } from "./migrations/1788624000000-add
         database: config.get<string>("DB_NAME", "poo_diary"),
         entities: [
           DiaryEntryEntity,
+          DailyBowelStatusEntity,
           LegacyDeviceUserEntity,
           MercuryUserEntity,
           AccountLinkEntity,
@@ -41,6 +44,7 @@ import { AddAccountAuditLogs1788624000000 } from "./migrations/1788624000000-add
         migrations: [
           AddMercuryIdentity1725321600000,
           AddAccountAuditLogs1788624000000,
+          AddBowelExperienceAndDailyStatus1790208000000,
         ],
         migrationsRun: config.get<string>("DB_MIGRATIONS_RUN", "false") === "true",
         synchronize: config.get<string>("NODE_ENV") !== "production",
