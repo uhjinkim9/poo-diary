@@ -16,6 +16,7 @@ import { CreateDiaryDto } from "./dto/create-diary.dto";
 import { UpdateDiaryDto } from "./dto/update-diary.dto";
 import { DiaryEntryEntity } from "./diary.entity";
 import { DailyBowelStatusEntity } from "./daily-bowel-status.entity";
+import { MenstrualCycleEntity } from "../cycle/menstrual-cycle.entity";
 
 @Injectable()
 export class DiaryService {
@@ -24,6 +25,8 @@ export class DiaryService {
     private readonly repo: Repository<DiaryEntryEntity>,
     @InjectRepository(DailyBowelStatusEntity)
     private readonly dailyStatusRepo: Repository<DailyBowelStatusEntity>,
+    @InjectRepository(MenstrualCycleEntity)
+    private readonly cycleRepo: Repository<MenstrualCycleEntity>,
   ) {}
 
   private ownerWhere(principal: AuthPrincipal): FindOptionsWhere<DiaryEntryEntity> {
@@ -67,6 +70,28 @@ export class DiaryService {
     };
   }
 
+  /** 주기 기록이 있는 경우에만 새 배변 기록의 생리 일차를 자동 보완한다. */
+  private async menstrualDayFor(
+    principal: AuthPrincipal,
+    recordedAt: Date,
+  ): Promise<number | null> {
+    const recordDate = this.dateInKorea(recordedAt);
+    const owner = principal.kind === "mercury"
+      ? { mercuryUserId: principal.mercuryUserId }
+      : { userId: principal.legacyDeviceUserId, mercuryUserId: IsNull() };
+    const cycle = await this.cycleRepo
+      .createQueryBuilder("cycle")
+      .where(owner)
+      .andWhere('cycle."startedAt" <= :recordDate', { recordDate })
+      .andWhere('(cycle."endedAt" IS NULL OR cycle."endedAt" >= :recordDate)')
+      .orderBy('cycle."startedAt"', "DESC")
+      .getOne();
+    if (!cycle) return null;
+    const start = Date.parse(`${cycle.startedAt}T00:00:00Z`);
+    const date = Date.parse(`${recordDate}T00:00:00Z`);
+    return Math.min(7, Math.floor((date - start) / 86_400_000) + 1);
+  }
+
   findAll(principal: AuthPrincipal): Promise<DiaryEntryEntity[]> {
     return this.repo.find({
       where: this.ownerWhere(principal),
@@ -96,7 +121,10 @@ export class DiaryService {
       painLevel: dto.painLevel ?? null,
       foods: dto.foods ?? [],
       mealNote: dto.mealNote ?? null,
-      menstrualDay: dto.menstrualDay ?? null,
+      menstrualDay:
+        dto.menstrualDay === undefined
+          ? await this.menstrualDayFor(principal, recordedAt)
+          : dto.menstrualDay,
       hadEnoughSleep: dto.hadEnoughSleep ?? false,
       overate: dto.overate ?? false,
       hadUrgency: dto.hadUrgency ?? false,

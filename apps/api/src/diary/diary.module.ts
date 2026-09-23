@@ -4,11 +4,12 @@ import { DiaryController } from "./diary.controller";
 import { DiaryService } from "./diary.service";
 import { DiaryEntryEntity } from "./diary.entity";
 import { DailyBowelStatusEntity } from "./daily-bowel-status.entity";
+import { MenstrualCycleEntity } from "../cycle/menstrual-cycle.entity";
 import { AuthModule } from "../auth/auth.module";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([DiaryEntryEntity, DailyBowelStatusEntity]),
+    TypeOrmModule.forFeature([DiaryEntryEntity, DailyBowelStatusEntity, MenstrualCycleEntity]),
     AuthModule,
   ],
   controllers: [DiaryController],

@@ -87,12 +87,23 @@ export default function HomePage() {
     <main className="min-h-[100dvh] flex flex-col p-5 max-w-md mx-auto">
       {/* 헤더 */}
       <header className="pt-10 pb-6">
-        <p className="text-xs font-medium text-amber-500 tracking-widest uppercase mb-1">
-          My Health Log
-        </p>
-        <h1 className="text-4xl font-black text-amber-900">
-          Poo Diary <span className="inline-block animate-bounce">💩</span>
-        </h1>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-medium text-amber-500 tracking-widest uppercase mb-1">
+              My Health Log
+            </p>
+            <h1 className="text-4xl font-black text-amber-900">
+              Poo Diary <span className="inline-block animate-bounce">💩</span>
+            </h1>
+          </div>
+          <Link
+            href="/profile"
+            aria-label="내 정보 열기"
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-100 bg-white text-lg shadow-sm transition-transform active:scale-95"
+          >
+            👤
+          </Link>
+        </div>
       </header>
 
       {/* 팀 카드 */}

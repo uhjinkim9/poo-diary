@@ -120,6 +120,23 @@ export interface DailyBowelStatus {
   noBowelMovement: boolean;
 }
 
+/** 생리 시작일과 종료일. 날짜는 사용자의 로컬(한국) 날짜 기준이다. */
+export interface MenstrualCycle {
+  id: string;
+  startedAt: string; // YYYY-MM-DD
+  endedAt: string | null; // YYYY-MM-DD
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateMenstrualCycleDto {
+  startedAt: string;
+}
+
+export interface FinishMenstrualCycleDto {
+  endedAt: string;
+}
+
 /** 식품별 배변 상관관계 통계 */
 export interface FoodCorrelation {
   food: FoodTag;

@@ -22,6 +22,8 @@ import {
 import type { JsonWebKey } from "crypto";
 import { DataSource, Repository } from "typeorm";
 import { DiaryEntryEntity } from "../diary/diary.entity";
+import { DailyBowelStatusEntity } from "../diary/daily-bowel-status.entity";
+import { MenstrualCycleEntity } from "../cycle/menstrual-cycle.entity";
 import {
   AccountLinkEntity,
   AccountAuditLogEntity,
@@ -641,6 +643,38 @@ export class AuthService {
         await manager
           .createQueryBuilder()
           .update(DiaryEntryEntity)
+          .set({ mercuryUserId })
+          .where('"userId" = :legacyDeviceUserId', { legacyDeviceUserId })
+          .andWhere('"mercuryUserId" IS NULL')
+          .execute();
+        // 같은 날짜에 중앙 계정으로 먼저 기록한 상태가 있으면 중앙 기록을
+        // 우선하고, 나머지 기존 기기 기록만 소유권을 옮긴다.
+        await manager.query(
+          `DELETE FROM "daily_bowel_status" legacy
+           USING "daily_bowel_status" central
+           WHERE legacy."userId" = $1 AND legacy."mercuryUserId" IS NULL
+             AND central."mercuryUserId" = $2
+             AND central."statusDate" = legacy."statusDate"`,
+          [legacyDeviceUserId, mercuryUserId],
+        );
+        await manager
+          .createQueryBuilder()
+          .update(DailyBowelStatusEntity)
+          .set({ mercuryUserId })
+          .where('"userId" = :legacyDeviceUserId', { legacyDeviceUserId })
+          .andWhere('"mercuryUserId" IS NULL')
+          .execute();
+        await manager.query(
+          `DELETE FROM "menstrual_cycle" legacy
+           USING "menstrual_cycle" central
+           WHERE legacy."userId" = $1 AND legacy."mercuryUserId" IS NULL
+             AND central."mercuryUserId" = $2
+             AND central."startedAt" = legacy."startedAt"`,
+          [legacyDeviceUserId, mercuryUserId],
+        );
+        await manager
+          .createQueryBuilder()
+          .update(MenstrualCycleEntity)
           .set({ mercuryUserId })
           .where('"userId" = :legacyDeviceUserId', { legacyDeviceUserId })
           .andWhere('"mercuryUserId" IS NULL')
