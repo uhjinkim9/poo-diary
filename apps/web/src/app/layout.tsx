@@ -5,6 +5,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { BottomNav } from "@/components/BottomNav";
 import { UserSetup } from "@/components/UserSetup";
 import { AuthBootstrap } from "@/components/AuthBootstrap";
+import { AnnouncementPopup } from "@/components/AnnouncementPopup";
 
 const pretendard = localFont({
   src: "../../node_modules/pretendard/dist/web/variable/woff2/PretendardVariable.woff2",
@@ -42,6 +43,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthBootstrap />
           <UserSetup />
+          <AnnouncementPopup />
           {children}
           <BottomNav />
         </QueryProvider>
