@@ -2,10 +2,10 @@ name: CI - Build, Push, Update GitOps
 
 on:
   push:
-    branches: [aws-migration]
+    branches: [main]
     tags: ["v*.*.*"]
   pull_request:
-    branches: [aws-migration]
+    branches: [main]
   workflow_dispatch:
     inputs:
       reason:
@@ -53,7 +53,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/poo-diary-api
           tags: |
             type=raw,value=build-${{ github.run_number }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/aws-migration' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
 
@@ -75,7 +75,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/poo-diary-web
           tags: |
             type=raw,value=build-${{ github.run_number }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/aws-migration' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
 
@@ -95,11 +95,11 @@ jobs:
 
   update-gitops:
     name: Update Helm image tags
-    # PR은 이미지 검증만 한다. aws-migration Push 또는 해당 브랜치에서 수동
-    # 실행한 경우에만 이미지를 Push한 뒤 AWS GitOps 브랜치의 태그를 바꾼다.
+    # PR은 이미지 검증만 한다. main Push 또는 main에서 수동 실행한 경우에만
+    # 이미지를 Push한 뒤 AWS GitOps 브랜치의 태그를 바꾼다.
     if: >-
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
-      github.ref == 'refs/heads/aws-migration'
+      github.ref == 'refs/heads/main'
     needs: build-and-push
     runs-on: ubuntu-latest
 
@@ -199,8 +199,8 @@ jobs:
           title: "ℹ️ 이미지 Push 완료 · GitOps 업데이트 미수행: poo-diary"
           description: |
             **태그:** `build-${{ github.run_number }}`
-            버전 태그 Push 또는 aws-migration 이외 ref의 수동 실행입니다.
-            GitOps 태그는 aws-migration Push 또는 aws-migration에서 실행한 workflow_dispatch에서만 변경되므로 Argo CD 배포가 시작되지 않았습니다.
+            버전 태그 Push 또는 main 이외 ref의 수동 실행입니다.
+            GitOps 태그는 main Push 또는 main에서 실행한 workflow_dispatch에서만 변경되므로 Argo CD 배포가 시작되지 않았습니다.
           color: 0xFEE75C
 
       - name: Notify cancelled
