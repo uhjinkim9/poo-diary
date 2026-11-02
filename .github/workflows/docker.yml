@@ -2,10 +2,10 @@ name: CI - Build, Push, Update GitOps
 
 on:
   push:
-    branches: [main]
+    branches: [aws-migration]
     tags: ["v*.*.*"]
   pull_request:
-    branches: [main]
+    branches: [aws-migration]
   workflow_dispatch:
     inputs:
       reason:
@@ -20,7 +20,8 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   GITOPS_REPOSITORY: uhjinkim9/helm-chart
-  CHART_PATH: charts/namespace-poo-diary/poo-diary
+  GITOPS_BRANCH: aws-migration
+  CHART_PATH: charts/poo-diary
 
 jobs:
   build-and-push:
@@ -52,7 +53,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/poo-diary-api
           tags: |
             type=raw,value=build-${{ github.run_number }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/aws-migration' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
 
@@ -74,7 +75,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/poo-diary-web
           tags: |
             type=raw,value=build-${{ github.run_number }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/aws-migration' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
 
@@ -94,7 +95,11 @@ jobs:
 
   update-gitops:
     name: Update Helm image tags
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    # PR은 이미지 검증만 한다. aws-migration Push 또는 해당 브랜치에서 수동
+    # 실행한 경우에만 이미지를 Push한 뒤 AWS GitOps 브랜치의 태그를 바꾼다.
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/aws-migration'
     needs: build-and-push
     runs-on: ubuntu-latest
 
@@ -110,8 +115,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ env.GITOPS_REPOSITORY }}
-          ref: main
+          ref: ${{ env.GITOPS_BRANCH }}
           token: ${{ secrets.GITOPS_TOKEN }}
+          fetch-depth: 1
 
       - name: Update API and Web tags
         env:
@@ -121,6 +127,8 @@ jobs:
           VALUES_FILE="${CHART_PATH}/values.yaml"
 
           test -f "${VALUES_FILE}"
+          test "$(yq -r '.api.image.repository' "${VALUES_FILE}")" = "${REGISTRY}/${GITHUB_REPOSITORY_OWNER}/poo-diary-api"
+          test "$(yq -r '.web.image.repository' "${VALUES_FILE}")" = "${REGISTRY}/${GITHUB_REPOSITORY_OWNER}/poo-diary-web"
           yq -i '.api.image.tag = strenv(IMAGE_TAG)' "${VALUES_FILE}"
           yq -i '.web.image.tag = strenv(IMAGE_TAG)' "${VALUES_FILE}"
 
@@ -146,7 +154,9 @@ jobs:
           fi
 
           git commit -m "ci: deploy poo-diary ${IMAGE_TAG} [skip ci]"
-          git push origin main
+          # 원격 브랜치가 앞서 있으면 non-fast-forward로 실패한다. 강제 Push는
+          # 하지 않으므로 GitOps 저장소의 다른 변경을 덮어쓰지 않는다.
+          git push origin "HEAD:${GITOPS_BRANCH}"
 
   notify:
     name: Discord notification
@@ -156,16 +166,17 @@ jobs:
 
     steps:
       - name: Notify success
-        if: needs.build-and-push.result == 'success' && needs.update-gitops.result != 'failure'
+        if: needs.build-and-push.result == 'success' && needs.update-gitops.result == 'success'
         uses: sarisia/actions-status-discord@v1
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           status: success
-          title: "✅ 빌드 성공: poo-diary"
+          title: "✅ 이미지 Push 및 GitOps 업데이트 완료: poo-diary"
           description: |
             **태그:** `build-${{ github.run_number }}`
             **커밋:** `${{ github.sha }}`
-            Argo CD 자동 배포가 시작됩니다.
+            **GitOps:** `${{ env.GITOPS_BRANCH }}` / `${{ env.CHART_PATH }}`
+            Argo CD 자동 동기화 대상이 갱신되었습니다. Kubernetes 배포 완료 여부는 Argo CD에서 확인해 주세요.
           color: 0x57F287
 
       - name: Notify failure
@@ -178,3 +189,28 @@ jobs:
           description: |
             **로그:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           color: 0xED4245
+
+      - name: Notify image-only completion
+        if: needs.build-and-push.result == 'success' && needs.update-gitops.result == 'skipped'
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: warning
+          title: "ℹ️ 이미지 Push 완료 · GitOps 업데이트 미수행: poo-diary"
+          description: |
+            **태그:** `build-${{ github.run_number }}`
+            버전 태그 Push 또는 aws-migration 이외 ref의 수동 실행입니다.
+            GitOps 태그는 aws-migration Push 또는 aws-migration에서 실행한 workflow_dispatch에서만 변경되므로 Argo CD 배포가 시작되지 않았습니다.
+          color: 0xFEE75C
+
+      - name: Notify cancelled
+        if: needs.build-and-push.result == 'cancelled' || needs.update-gitops.result == 'cancelled'
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: warning
+          title: "⚠️ CI/CD 취소됨: poo-diary"
+          description: |
+            **로그:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            이미지 Push 또는 GitOps 업데이트가 완료되지 않았을 수 있습니다.
+          color: 0xFEE75C
