@@ -30,6 +30,9 @@ export class LegacyDeviceUserEntity {
 
   @Column({ type: "timestamptz", nullable: true })
   lastVerifiedAt!: Date | null;
+
+  @Column({ type: "timestamptz", nullable: true })
+  lastActiveAt!: Date | null;
 }
 
 @Entity("mercury_user")
@@ -51,6 +54,9 @@ export class MercuryUserEntity {
 
   @UpdateDateColumn({ type: "timestamptz" })
   updatedAt!: Date;
+
+  @Column({ type: "timestamptz", nullable: true })
+  lastActiveAt!: Date | null;
 }
 
 @Entity("account_link")

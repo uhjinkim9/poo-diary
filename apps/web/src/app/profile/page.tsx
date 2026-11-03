@@ -2,6 +2,7 @@
 
 import { apiClient } from "@/lib/apiClient";
 import { useEffect, useState } from "react";
+import { PushNotificationSettings } from "@/components/PushNotificationSettings";
 
 interface AuthStatus {
   authenticated: boolean;
@@ -172,6 +173,8 @@ export default function ProfilePage() {
           </>
         )}
       </div>
+
+      <PushNotificationSettings />
 
       <div className="card p-5">
         <p className="text-xs font-semibold text-amber-800 mb-1">내 기기 ID</p>

@@ -924,6 +924,10 @@ export class AuthService {
             { idHash: session.idHash },
             { lastSeenAt: new Date() },
           );
+          await this.mercuryUsers.update(
+            { id: session.mercuryUserId },
+            { lastActiveAt: new Date() },
+          );
           return { kind: "mercury", mercuryUserId: session.mercuryUserId };
         }
       }
@@ -950,6 +954,12 @@ export class AuthService {
       where: { id: deviceUserId },
     });
     if (legacy && !legacy.loginEnabled) return null;
+    if (legacy) {
+      await this.legacyUsers.update(
+        { id: deviceUserId },
+        { lastActiveAt: new Date() },
+      );
+    }
     return { kind: "legacy", legacyDeviceUserId: deviceUserId };
   }
 
