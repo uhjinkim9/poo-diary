@@ -142,6 +142,9 @@ importers:
       autoprefixer:
         specifier: ^10.5.4
         version: 10.5.4(postcss@8.5.26)
+      babel-loader:
+        specifier: 8.4.1
+        version: 8.4.1(@babel/core@7.29.7)(webpack@5.97.1(postcss@8.5.26))
       eslint:
         specifier: ^9.0.0
         version: 9.39.5(jiti@1.21.7)
