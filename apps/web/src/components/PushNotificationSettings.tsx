@@ -47,7 +47,18 @@ export function PushNotificationSettings() {
       setMessage("브라우저 설정에서 알림 권한을 허용해 주세요.");
       return false;
     }
-    const registration = await navigator.serviceWorker.ready;
+    // ServiceWorkerContainer.ready는 활성 워커가 생길 때까지 끝나지 않을 수 있다.
+    // 설정 버튼이 계속 비활성화된 채 남는 일을 막기 위해 준비 시간을 제한한다.
+    const registration = await Promise.race<ServiceWorkerRegistration | null>([
+      navigator.serviceWorker.ready,
+      new Promise<null>((resolve) => {
+        window.setTimeout(() => resolve(null), 10_000);
+      }),
+    ]);
+    if (!registration) {
+      setMessage("알림 준비에 시간이 걸리고 있어요. 화면을 새로고침한 뒤 다시 시도해 주세요.");
+      return false;
+    }
     const subscription = await registration.pushManager.getSubscription()
       ?? await registration.pushManager.subscribe({
         userVisibleOnly: true,

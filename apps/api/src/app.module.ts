@@ -62,8 +62,10 @@ import { AddPushNotifications1790380800000 } from "./migrations/1790380800000-ad
           AddMenstrualCycles1790294400000,
           AddPushNotifications1790380800000,
         ],
-        migrationsRun: config.get<string>("DB_MIGRATIONS_RUN", "false") === "true",
-        synchronize: config.get<string>("NODE_ENV") !== "production",
+        migrationsRun:
+          config.get<string>("DB_MIGRATIONS_RUN", "false") === "true",
+        // synchronize: config.get<string>("NODE_ENV") !== "production",
+        synchronize: true,
         logging: config.get<string>("NODE_ENV") === "development",
         ssl:
           config.get<string>("DB_SSL") === "true"
