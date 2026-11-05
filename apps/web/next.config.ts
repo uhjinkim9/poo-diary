@@ -4,7 +4,8 @@ import withPWA from "next-pwa";
 const pwaConfig = withPWA({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
-  register: true,
+  // App Router에서는 아래 ServiceWorkerRegistration 컴포넌트가 명시적으로 등록한다.
+  register: false,
   skipWaiting: true,
 });
 

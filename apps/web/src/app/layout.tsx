@@ -6,6 +6,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { UserSetup } from "@/components/UserSetup";
 import { AuthBootstrap } from "@/components/AuthBootstrap";
 import { AnnouncementPopup } from "@/components/AnnouncementPopup";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
 const pretendard = localFont({
   src: "../../node_modules/pretendard/dist/web/variable/woff2/PretendardVariable.woff2",
@@ -17,7 +18,7 @@ const pretendard = localFont({
 export const metadata: Metadata = {
   title: "Poo Diary",
   description: "나의 배변 활동을 기록하고 건강을 관리해요",
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -41,6 +42,7 @@ export default function RootLayout({
     <html lang="ko">
       <body className={`${pretendard.variable} font-pretendard pb-20`}>
         <QueryProvider>
+          <ServiceWorkerRegistration />
           <AuthBootstrap />
           <UserSetup />
           <AnnouncementPopup />
