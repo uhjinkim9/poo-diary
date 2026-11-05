@@ -7,6 +7,9 @@ const pwaConfig = withPWA({
   // App Router에서는 아래 ServiceWorkerRegistration 컴포넌트가 명시적으로 등록한다.
   register: false,
   skipWaiting: true,
+  // standalone 런타임은 이 서버 전용 manifest를 정적으로 제공하지 않는다.
+  // Workbox의 설치 단계에서 404가 나면 Service Worker 전체가 활성화되지 않는다.
+  buildExcludes: [/app-build-manifest\.json$/],
 });
 
 const nextConfig: NextConfig = {
