@@ -20,7 +20,7 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   GITOPS_REPOSITORY: uhjinkim9/helm-chart
-  GITOPS_BRANCH: aws-migration
+  GITOPS_BRANCH: main
   CHART_PATH: charts/poo-diary
 
 jobs:
@@ -96,7 +96,7 @@ jobs:
   update-gitops:
     name: Update Helm image tags
     # PR은 이미지 검증만 한다. main Push 또는 main에서 수동 실행한 경우에만
-    # 이미지를 Push한 뒤 AWS GitOps 브랜치의 태그를 바꾼다.
+    # 이미지를 Push한 뒤 GitOps main 브랜치의 태그를 바꾼다.
     if: >-
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       github.ref == 'refs/heads/main'
