@@ -6,7 +6,6 @@ import { BottomNav } from "@/components/BottomNav";
 import { UserSetup } from "@/components/UserSetup";
 import { AuthBootstrap } from "@/components/AuthBootstrap";
 import { AnnouncementPopup } from "@/components/AnnouncementPopup";
-import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
 const pretendard = localFont({
   src: "../../node_modules/pretendard/dist/web/variable/woff2/PretendardVariable.woff2",
@@ -42,7 +41,6 @@ export default function RootLayout({
     <html lang="ko">
       <body className={`${pretendard.variable} font-pretendard pb-20`}>
         <QueryProvider>
-          <ServiceWorkerRegistration />
           <AuthBootstrap />
           <UserSetup />
           <AnnouncementPopup />

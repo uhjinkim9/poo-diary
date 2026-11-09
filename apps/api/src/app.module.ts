@@ -8,12 +8,8 @@ import { DiaryEntryEntity } from "./diary/diary.entity";
 import { DailyBowelStatusEntity } from "./diary/daily-bowel-status.entity";
 import { MenstrualCycleEntity } from "./cycle/menstrual-cycle.entity";
 import { CycleModule } from "./cycle/cycle.module";
-import { NotificationModule } from "./notifications/notification.module";
-import {
-  NotificationDeliveryEntity,
-  NotificationPreferenceEntity,
-  PushSubscriptionEntity,
-} from "./notifications/notification.entities";
+import { ReminderModule } from "./reminders/reminder.module";
+import { DiscordReminderDeliveryEntity, DiscordReminderSettingEntity } from "./reminders/reminder.entities";
 import { AuthModule } from "./auth/auth.module";
 import {
   AccountLinkEntity,
@@ -28,6 +24,7 @@ import { AddAccountAuditLogs1788624000000 } from "./migrations/1788624000000-add
 import { AddBowelExperienceAndDailyStatus1790208000000 } from "./migrations/1790208000000-add-bowel-experience-and-daily-status";
 import { AddMenstrualCycles1790294400000 } from "./migrations/1790294400000-add-menstrual-cycles";
 import { AddPushNotifications1790380800000 } from "./migrations/1790380800000-add-push-notifications";
+import { ReplacePushWithDiscordReminders1790467200000 } from "./migrations/1790467200000-replace-push-with-discord-reminders";
 
 @Module({
   imports: [
@@ -45,9 +42,8 @@ import { AddPushNotifications1790380800000 } from "./migrations/1790380800000-ad
           DiaryEntryEntity,
           DailyBowelStatusEntity,
           MenstrualCycleEntity,
-          PushSubscriptionEntity,
-          NotificationPreferenceEntity,
-          NotificationDeliveryEntity,
+          DiscordReminderSettingEntity,
+          DiscordReminderDeliveryEntity,
           LegacyDeviceUserEntity,
           MercuryUserEntity,
           AccountLinkEntity,
@@ -61,6 +57,7 @@ import { AddPushNotifications1790380800000 } from "./migrations/1790380800000-ad
           AddBowelExperienceAndDailyStatus1790208000000,
           AddMenstrualCycles1790294400000,
           AddPushNotifications1790380800000,
+          ReplacePushWithDiscordReminders1790467200000,
         ],
         migrationsRun:
           config.get<string>("DB_MIGRATIONS_RUN", "false") === "true",
@@ -76,7 +73,7 @@ import { AddPushNotifications1790380800000 } from "./migrations/1790380800000-ad
     AuthModule,
     DiaryModule,
     CycleModule,
-    NotificationModule,
+    ReminderModule,
   ],
   controllers: [AppController],
   providers: [AppService],

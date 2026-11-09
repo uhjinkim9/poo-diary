@@ -2,7 +2,7 @@
 
 import { apiClient } from "@/lib/apiClient";
 import { useEffect, useState } from "react";
-import { PushNotificationSettings } from "@/components/PushNotificationSettings";
+import { DiscordReminderSettings } from "@/components/DiscordReminderSettings";
 
 interface AuthStatus {
   authenticated: boolean;
@@ -174,7 +174,7 @@ export default function ProfilePage() {
         )}
       </div>
 
-      <PushNotificationSettings />
+      <DiscordReminderSettings />
 
       <div className="card p-5">
         <p className="text-xs font-semibold text-amber-800 mb-1">내 기기 ID</p>
