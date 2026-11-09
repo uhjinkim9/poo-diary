@@ -4,12 +4,14 @@ import type { CreateMenstrualCycleDto, FinishMenstrualCycleDto, MenstrualCycle }
 import { FindOptionsWhere, IsNull, Repository } from "typeorm";
 import type { AuthPrincipal } from "../auth/auth.types";
 import { MenstrualCycleEntity } from "./menstrual-cycle.entity";
+import { ReminderService } from "../reminders/reminder.service";
 
 @Injectable()
 export class CycleService {
   constructor(
     @InjectRepository(MenstrualCycleEntity)
     private readonly repo: Repository<MenstrualCycleEntity>,
+    private readonly reminders: ReminderService,
   ) {}
 
   private ownerWhere(principal: AuthPrincipal): FindOptionsWhere<MenstrualCycleEntity> {
@@ -61,7 +63,9 @@ export class CycleService {
       startedAt: dto.startedAt,
       endedAt: null,
     }));
-    return this.toDto(saved);
+    const result = this.toDto(saved);
+    await this.reminders.notifyMenstrualStarted(principal, result.startedAt);
+    return result;
   }
 
   async finish(principal: AuthPrincipal, id: string, dto: FinishMenstrualCycleDto): Promise<MenstrualCycle> {

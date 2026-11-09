@@ -62,6 +62,23 @@ export class ReminderService {
   }
   async test(principal: AuthPrincipal) { return this.send(principal, "test", "🧪 Poo Diary 테스트 알림", "Discord 리마인더 연결이 정상이에요.", `test:${Date.now()}`); }
 
+  /** 기록 저장 흐름을 방해하지 않는 생리 시작 이벤트 알림이다. */
+  async notifyMenstrualStarted(principal: AuthPrincipal, startedAt: string): Promise<void> {
+    const setting = await this.settings.findOne({ where: this.where(principal) });
+    if (!setting?.menstrualEnabled) return;
+    try {
+      await this.send(
+        principal,
+        "menstrual-start",
+        "🌷 생리 시작 기록",
+        `${startedAt.replace(/-/g, ".")}에 생리 시작을 기록했어요. 오늘은 몸을 조금 더 다정하게 살펴봐요.`,
+        `menstrual-start:${setting.id}:${startedAt}`,
+      );
+    } catch (error) {
+      this.logger.warn(`Menstrual start Discord reminder failed: ${String(error)}`);
+    }
+  }
+
   private async send(principal: AuthPrincipal, type: string, title: string, body: string, idempotencyKey: string) {
     if (!this.enabled) return { sent: false, skipped: true };
     const setting = await this.settings.findOne({ where: this.where(principal) });
