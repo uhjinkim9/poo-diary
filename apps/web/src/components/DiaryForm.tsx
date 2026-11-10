@@ -6,9 +6,10 @@ import {
   type BristolType,
   type CreateDiaryDto,
   type FoodTag,
+  type MenstrualCycle,
   type StoolColor,
 } from "@poo-diary/shared";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 const BRISTOL_ITEMS: { type: BristolType; emoji: string }[] = [
   { type: 1, emoji: "🪨" },
@@ -43,6 +44,7 @@ const EXPERIENCE_OPTIONS = [
 
 type DiaryFormProps = {
   initialValue?: CreateDiaryDto;
+  menstrualCycles?: MenstrualCycle[];
   isPending?: boolean;
   allowRecordedAtEdit?: boolean;
   submitLabel: string;
@@ -60,6 +62,7 @@ function toLocalDateTimeValue(iso?: string): string {
 
 export function DiaryForm({
   initialValue,
+  menstrualCycles = [],
   isPending = false,
   allowRecordedAtEdit = false,
   submitLabel,
@@ -76,6 +79,21 @@ export function DiaryForm({
         : {}),
     },
   );
+  const [menstrualDayAuto, setMenstrualDayAuto] = useState(!initialValue);
+
+  useEffect(() => {
+    if (!menstrualDayAuto || !form.recordedAt) return;
+    const recordDate = new Date(form.recordedAt).toLocaleDateString("en-CA", {
+      timeZone: "Asia/Seoul",
+    });
+    const activeCycle = menstrualCycles
+      .filter((cycle) => cycle.startedAt <= recordDate && (!cycle.endedAt || cycle.endedAt >= recordDate))
+      .sort((left, right) => right.startedAt.localeCompare(left.startedAt))[0];
+    const day = activeCycle
+      ? Math.min(7, Math.floor((Date.parse(`${recordDate}T00:00:00Z`) - Date.parse(`${activeCycle.startedAt}T00:00:00Z`)) / 86_400_000) + 1)
+      : null;
+    setForm((current) => current.menstrualDay === day ? current : { ...current, menstrualDay: day });
+  }, [form.recordedAt, menstrualCycles, menstrualDayAuto]);
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -261,7 +279,7 @@ export function DiaryForm({
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-amber-800">생리 일차</p>
             <span className="text-[10px] text-gray-400">
-              선택하지 않으면 해당 없음
+              {menstrualDayAuto && form.menstrualDay ? "주기 기록에서 자동 선택됨" : "선택하지 않으면 해당 없음"}
             </span>
           </div>
           <div
@@ -279,10 +297,7 @@ export function DiaryForm({
                   aria-checked={selected}
                   aria-label={day === 7 ? "생리 7일 이상" : `생리 ${day}일차`}
                   onClick={() =>
-                    setForm((value) => ({
-                      ...value,
-                      menstrualDay: selected ? null : day,
-                    }))
+                    { setMenstrualDayAuto(false); setForm((value) => ({ ...value, menstrualDay: selected ? null : day })); }
                   }
                   className={`min-w-0 rounded-xl border-2 py-2 text-xs font-bold transition-all ${
                     selected

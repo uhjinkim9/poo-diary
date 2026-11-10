@@ -2,11 +2,13 @@
 
 import { DiaryForm } from "@/components/DiaryForm";
 import { useCreateDiary } from "@/hooks/useDiary";
+import { useCycles } from "@/hooks/useCycle";
 import { useRouter } from "next/navigation";
 
 export default function NewDiaryPage() {
   const router = useRouter();
   const { mutate: createDiary, isPending } = useCreateDiary();
+  const { data: menstrualCycles = [] } = useCycles();
 
   return (
     <main className="min-h-[100dvh] p-5 max-w-md mx-auto">
@@ -25,6 +27,7 @@ export default function NewDiaryPage() {
       </header>
 
       <DiaryForm
+        menstrualCycles={menstrualCycles}
         allowRecordedAtEdit
         isPending={isPending}
         submitLabel="💾 저장하기"
